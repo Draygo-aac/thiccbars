@@ -568,11 +568,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
       return
     end
     self:Show(true)
-    if distance >= UNIT_VISIBLE_MAX_DISTANCE then
-      self:TranslucenceFrame(true)
-    else
-      self:TranslucenceFrame(false)
-    end
   end
   function w:UpdateBackground()
     local unitid = api.Unit:GetUnitId(w.target)
@@ -583,7 +578,10 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
     end
     self.bg:SetColor(1, 1, 1, 0.8)
   end
-  function w:Refresh(settings)
+  function w:Refresh(settings, settingschanged)
+    if settingschanged then
+        self:TranslucenceFrame(settings.bartransparency / 100)
+    end
     if settings.showbars == false then
         self:Show(false)
         return

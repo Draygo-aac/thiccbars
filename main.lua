@@ -1,6 +1,6 @@
 local api = require("api")
 local file = "thiccbars\\data\\_global.lua"
-
+local CreateSlider =  require('thiccbars/util/slider') 
 checkButton = require('thiccbars/util/check_button')
 -- First up is the addon definition!
 -- This information is shown in the Addon Manager.
@@ -9,11 +9,11 @@ local sandbox_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.0"
+  version = "1.1"
 }
 
 local nextcheck = false
-
+local settingschanged = true
 -- The Load Function is called as soon as the game loads its UI. Use it to initialize anything you need!
 local w
 local settings = {}
@@ -24,6 +24,7 @@ function LoadSettings()
 end
 function SaveSettings()
     api.File:Write(file, settings)
+    settingschanged = true
 end
 
 function CheckSettings()
@@ -41,6 +42,9 @@ function CheckSettings()
     end
     if settings.ctrlenabled == nil then
         settings.ctrlenabled = true
+    end
+    if settings.bartransparency == nil then
+        settings.bartransparency = 100
     end
 end
 
@@ -61,8 +65,9 @@ function DoUpdate()
     end
     for i = 1, #w.party do
         local party = w.party[i]
-        party:Refresh(settings)
+        party:Refresh(settings, settingschanged)
     end
+    settingschanged = false
 end
 
 local function OnUpdate()
@@ -109,7 +114,7 @@ end
 
 local event
 local eventwatched
-local ROWPADDING = 20
+local ROWPADDING = 5
 local function CreateViewOfSettingsFrame()
     local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 300)
     w:SetTitle("Settings")
@@ -125,7 +130,7 @@ local function CreateViewOfSettingsFrame()
 
 
     showThiccLabel = w:CreateChildWidget("label", "showThiccLabel", 0, true)
-    showThiccLabel:AddAnchor("TOPLEFT", w, 15, 47 + FONT_SIZE.LARGE + ROWPADDING * 0)
+    showThiccLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 0)
     showThiccLabel:SetText("Thicc Bars:")
     showThiccLabel:SetHeight(FONT_SIZE.LARGE)
     showThiccLabel.style:SetFontSize(FONT_SIZE.LARGE)
@@ -135,14 +140,14 @@ local function CreateViewOfSettingsFrame()
     w.showThiccLabel = showThiccLabel
 
     w.showThiccCheckButton = checkButton.CreateCheckButton("showThiccCheckButton", w, nil)
-    w.showThiccCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + FONT_SIZE.LARGE + ROWPADDING * 0)
+    w.showThiccCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 0)
     w.showThiccCheckButton:SetButtonStyle("default")
     w.showThiccCheckButton:Show(true)
 
 
     keyLabel = w:CreateChildWidget("label", "keyLabel", 0, true)
-    keyLabel:AddAnchor("TOPLEFT", w, 15, 47 + FONT_SIZE.LARGE + ROWPADDING * 1)
-    keyLabel:SetText("While below key is held, mouse clicks will pass through thiccbars. ")
+    keyLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 1)
+    keyLabel:SetText("While below key is held, mouse clicks will pass through thicc bars. ")
     keyLabel:SetHeight(FONT_SIZE.MIDDLE)
     keyLabel.style:SetFontSize(FONT_SIZE.MIDDLE)
     keyLabel.style:SetAlign(3)
@@ -154,7 +159,7 @@ local function CreateViewOfSettingsFrame()
 
 
     shiftLabel = w:CreateChildWidget("label", "shiftLabel", 0, true)
-    shiftLabel:AddAnchor("TOPLEFT", w, 15, 47 + FONT_SIZE.LARGE + ROWPADDING * 2)
+    shiftLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 2)
     shiftLabel:SetText("Shift:")
     shiftLabel:SetHeight(FONT_SIZE.LARGE)
     shiftLabel.style:SetFontSize(FONT_SIZE.LARGE)
@@ -164,12 +169,12 @@ local function CreateViewOfSettingsFrame()
     w.shiftLabel = shiftLabel
 
     w.shiftCheckButton = checkButton.CreateCheckButton("shiftCheckButton", w, nil)
-    w.shiftCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + FONT_SIZE.LARGE + ROWPADDING * 2)
+    w.shiftCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 2)
     w.shiftCheckButton:SetButtonStyle("default")
     w.shiftCheckButton:Show(true)   
 
     controlLabel = w:CreateChildWidget("label", "controlLabel", 0, true)
-    controlLabel:AddAnchor("TOPLEFT", w, 15, 47 + FONT_SIZE.LARGE + ROWPADDING * 3)
+    controlLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 3)
     controlLabel:SetText("Control:")
     controlLabel:SetHeight(FONT_SIZE.LARGE)
     controlLabel.style:SetFontSize(FONT_SIZE.LARGE)
@@ -179,13 +184,51 @@ local function CreateViewOfSettingsFrame()
     w.controlLabel = controlLabel
 
     w.controlCheckButton = checkButton.CreateCheckButton("controlCheckButton", w, nil)
-    w.controlCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + FONT_SIZE.LARGE + ROWPADDING * 3)
+    w.controlCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 3)
     w.controlCheckButton:SetButtonStyle("default")
     w.controlCheckButton:Show(true)
 
+    --w:CreateChildWidgetByType()
+    local transparencyLabel = w:CreateChildWidget("label", "transparencyLabel", 0, true)
+    transparencyLabel:SetHeight(FONT_SIZE.LARGE)
+    transparencyLabel:SetAutoResize(true)
+    transparencyLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 4)
+    transparencyLabel:SetText("Transparency")
+    transparencyLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(transparencyLabel, FONT_COLOR.DEFAULT)
+
+    local transparencyScroll = CreateSlider("transparencyScroll", transparencyLabel)
+    transparencyScroll:SetStep(1)
+    transparencyScroll:SetMinMaxValues(0, 100)
+    transparencyScroll:SetInitialValue(settings.bartransparency, false)
+    transparencyScroll:UseWheel()
+
+   
+
+    transparencyScroll:AddAnchor("TOPLEFT", transparencyLabel, "BOTTOMLEFT", 0, 5)
+    transparencyScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.transparencyScroll = transparencyScroll
+
+    local percentLabel = w:CreateChildWidget("label", "percentLabel", 0, true)
+    percentLabel:SetExtent(30, 20)
+    percentLabel:AddAnchor("LEFT", transparencyLabel, "RIGHT", 7, 0)
+    percentLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(percentLabel, FONT_COLOR.BLUE)
+    local bg = percentLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", percentLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", percentLabel, 5, 6)
+    percentLabel.bg = bg
+    w.transparencyScroll.percentLabel = percentLabel
+
+    local str = string.format("%d", settings.bartransparency)
+    w.transparencyScroll.percentLabel:SetText(tostring(str))
+
     
+
     function w:OnClose()
         w:Show(false)
+        SaveSettings()
     end
 
     function w:ThiccOnCheckChanged()
@@ -203,6 +246,15 @@ local function CreateViewOfSettingsFrame()
          settings.ctrlenabled = checked
          SaveSettings()
     end
+
+    function w.transparencyScroll:OnSliderChanged(arg)
+        local value = w.transparencyScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.transparencyScroll.percentLabel:SetText(tostring(str))
+        settings.bartransparency = value
+        settingschanged = true
+    end
+    w.transparencyScroll:SetHandler("OnSliderChanged", w.transparencyScroll.OnSliderChanged)
 
     w.showThiccCheckButton:SetChecked(settings.showbars)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)
@@ -233,7 +285,7 @@ local function Load()
     CreateRaidMember = require("thiccbars//member")
     settings = LoadSettings()
 
-    CheckSettings(settings)
+    CheckSettings()
 
     SettingsFrame = CreateViewOfSettingsFrame()
     SettingsFrame:Show(false)
