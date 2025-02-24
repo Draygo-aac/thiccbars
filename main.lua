@@ -2,6 +2,7 @@ local api = require("api")
 local file = "thiccbars\\data\\_global.lua"
 local CreateSlider =  require('thiccbars/util/slider') 
 checkButton = require('thiccbars/util/check_button')
+globals = require("thiccbars//common")
 -- First up is the addon definition!
 -- This information is shown in the Addon Manager.
 -- You also specify "unload" which is the function called when unloading your addon.
@@ -9,7 +10,7 @@ local sandbox_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.1"
+  version = "1.2"
 }
 
 local nextcheck = false
@@ -17,6 +18,18 @@ local settingschanged = true
 -- The Load Function is called as soon as the game loads its UI. Use it to initialize anything you need!
 local w
 local settings = {}
+local event
+local eventwatched
+local ROWPADDING = 7
+local CreateRaidMember
+local SetViewOfRaidMember
+local preview
+local SettingsFrame
+local SettingsButton
+local raidmanager
+
+
+
 
 function LoadSettings()
 	
@@ -46,6 +59,18 @@ function CheckSettings()
     if settings.bartransparency == nil then
         settings.bartransparency = 100
     end
+    if settings.width == nil then
+        settings.width = globals.MEMBER_WIDTH
+    end
+    if settings.hpheight == nil then
+        settings.hpheight = 28
+    end
+    if settings.mpheight == nil then
+        settings.mpheight = 6
+    end
+    if settings.buffsize == nil then
+        settings.buffsize = 16
+    end
 end
 
 
@@ -66,6 +91,9 @@ function DoUpdate()
     for i = 1, #w.party do
         local party = w.party[i]
         party:Refresh(settings, settingschanged)
+    end
+    if SettingsFrame:IsVisible() then
+        SettingsFrame:Refresh(settings, settingschanged)
     end
     settingschanged = false
 end
@@ -112,11 +140,10 @@ local function ChangeTarget(arg)
     targetunitframe.target = "target"
 end
 
-local event
-local eventwatched
-local ROWPADDING = 5
+
+
 local function CreateViewOfSettingsFrame()
-    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 300)
+    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 420)
     w:SetTitle("Settings")
     w:AddAnchor("CENTER", "UIParent", 0, 0)
     w:SetCloseOnEscape(true)
@@ -128,6 +155,26 @@ local function CreateViewOfSettingsFrame()
 
     w.closeButton = closeButton
 
+    previewLabel = w:CreateChildWidget("label", "previewLabel", 0, true)
+    previewLabel:AddAnchor("TOPLEFT", w, 400, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 0)
+    previewLabel:SetText("Preview:")
+    previewLabel:SetHeight(FONT_SIZE.LARGE)
+    previewLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    previewLabel.style:SetAlign(3)
+    ApplyTextColor(previewLabel, FONT_COLOR.DEFAULT)
+
+    w.previewLabel = previewLabel
+
+    preview = CreateRaidMember(w, "player", "memberWindow", 0, ChangeTarget, settings)
+    
+    preview:Show(true)
+    preview.memberIndex = 0
+    preview.target = "player"
+
+    preview:RemoveAllAnchors() -- should remove anchors before moving one
+    preview:AddAnchor("TOPLEFT", w, 350, 30)
+
+    w.preview = preview
 
     showThiccLabel = w:CreateChildWidget("label", "showThiccLabel", 0, true)
     showThiccLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 0)
@@ -154,9 +201,6 @@ local function CreateViewOfSettingsFrame()
     ApplyTextColor(keyLabel, FONT_COLOR.DEFAULT)
 
     w.keyLabel = keyLabel
-
-
-
 
     shiftLabel = w:CreateChildWidget("label", "shiftLabel", 0, true)
     shiftLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 2)
@@ -224,7 +268,154 @@ local function CreateViewOfSettingsFrame()
     local str = string.format("%d", settings.bartransparency)
     w.transparencyScroll.percentLabel:SetText(tostring(str))
 
-    
+
+    local WidthLabel = w:CreateChildWidget("label", "WidthLabel", 0, true)
+    WidthLabel:SetHeight(FONT_SIZE.LARGE)
+    WidthLabel:SetAutoResize(true)
+    WidthLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 6)
+    WidthLabel:SetText("Width")
+    WidthLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(WidthLabel, FONT_COLOR.DEFAULT)
+
+    local WidthScroll = CreateSlider("WidthScroll", WidthLabel)
+    WidthScroll:SetStep(1)
+    WidthScroll:SetMinMaxValues(50, 150)
+    WidthScroll:SetInitialValue(settings.width, false)
+    WidthScroll:UseWheel()
+
+   
+
+    WidthScroll:AddAnchor("TOPLEFT", WidthLabel, "BOTTOMLEFT", 0, 7)
+    WidthScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.WidthScroll = WidthScroll
+
+    local widthSettingLabel = w:CreateChildWidget("label", "widthSettingLabel", 0, true)
+    widthSettingLabel:SetExtent(30, 20)
+    widthSettingLabel:AddAnchor("LEFT", WidthLabel, "RIGHT", 7, 0)
+    widthSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(widthSettingLabel, FONT_COLOR.BLUE)
+    local bg = widthSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", widthSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", widthSettingLabel, 5, 6)
+    widthSettingLabel.bg = bg
+    w.WidthScroll.widthSettingLabel = widthSettingLabel
+
+    local str = string.format("%d", settings.width)
+    w.WidthScroll.widthSettingLabel:SetText(tostring(str))
+
+    local HPHeightLabel = w:CreateChildWidget("label", "HPHeightLabel", 0, true)
+    HPHeightLabel:SetHeight(FONT_SIZE.LARGE)
+    HPHeightLabel:SetAutoResize(true)
+    HPHeightLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 8)
+    HPHeightLabel:SetText("HP Height")
+    HPHeightLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(HPHeightLabel, FONT_COLOR.DEFAULT)
+
+    local HPHeightScroll = CreateSlider("HPHeightScroll", HPHeightLabel)
+    HPHeightScroll:SetStep(1)
+    HPHeightScroll:SetMinMaxValues(5, 50)
+    HPHeightScroll:SetInitialValue(settings.hpheight, false)
+    HPHeightScroll:UseWheel()
+
+   
+
+    HPHeightScroll:AddAnchor("TOPLEFT", HPHeightLabel, "BOTTOMLEFT", 0, 7)
+    HPHeightScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.HPHeightScroll = HPHeightScroll
+
+    local HPHeightSettingLabel = w:CreateChildWidget("label", "HPHeightSettingLabel", 0, true)
+    HPHeightSettingLabel:SetExtent(30, 20)
+    HPHeightSettingLabel:AddAnchor("LEFT", HPHeightLabel, "RIGHT", 7, 0)
+    HPHeightSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(HPHeightSettingLabel, FONT_COLOR.BLUE)
+    local bg = HPHeightSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", HPHeightSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", HPHeightSettingLabel, 5, 6)
+    HPHeightSettingLabel.bg = bg
+    w.HPHeightScroll.HPHeightSettingLabel = HPHeightSettingLabel
+
+    local str = string.format("%d", settings.hpheight)
+    w.HPHeightScroll.HPHeightSettingLabel:SetText(tostring(str))
+
+
+    local MPHeightLabel = w:CreateChildWidget("label", "MPHeightLabel", 0, true)
+    MPHeightLabel:SetHeight(FONT_SIZE.LARGE)
+    MPHeightLabel:SetAutoResize(true)
+    MPHeightLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 10)
+    MPHeightLabel:SetText("MP Height")
+    MPHeightLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(MPHeightLabel, FONT_COLOR.DEFAULT)
+
+    local MPHeightScroll = CreateSlider("MPHeightScroll", MPHeightLabel)
+    MPHeightScroll:SetStep(1)
+    MPHeightScroll:SetMinMaxValues(0, 30)
+    MPHeightScroll:SetInitialValue(settings.mpheight, false)
+    MPHeightScroll:UseWheel()
+
+   
+
+    MPHeightScroll:AddAnchor("TOPLEFT", MPHeightLabel, "BOTTOMLEFT", 0, 7)
+    MPHeightScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.MPHeightScroll = MPHeightScroll
+
+    local MPHeightSettingLabel = w:CreateChildWidget("label", "MPHeightSettingLabel", 0, true)
+    MPHeightSettingLabel:SetExtent(30, 20)
+    MPHeightSettingLabel:AddAnchor("LEFT", MPHeightLabel, "RIGHT", 7, 0)
+    MPHeightSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(MPHeightSettingLabel, FONT_COLOR.BLUE)
+    local bg = MPHeightSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", MPHeightSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", MPHeightSettingLabel, 5, 6)
+    MPHeightSettingLabel.bg = bg
+    w.MPHeightScroll.MPHeightSettingLabel = MPHeightSettingLabel
+
+    local str = string.format("%d", settings.mpheight)
+    w.MPHeightScroll.MPHeightSettingLabel:SetText(tostring(str))
+
+    local BuffSizeLabel = w:CreateChildWidget("label", "BuffSizeLabel", 0, true)
+    BuffSizeLabel:SetHeight(FONT_SIZE.LARGE)
+    BuffSizeLabel:SetAutoResize(true)
+    BuffSizeLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 12)
+    BuffSizeLabel:SetText("Debuff Icon Size")
+    BuffSizeLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(BuffSizeLabel, FONT_COLOR.DEFAULT)
+
+    local BuffSizeScroll = CreateSlider("BuffSizeScroll", BuffSizeLabel)
+    BuffSizeScroll:SetStep(1)
+    BuffSizeScroll:SetMinMaxValues(0, 50)
+    BuffSizeScroll:SetInitialValue(settings.buffsize, false)
+    BuffSizeScroll:UseWheel()
+
+   
+
+    BuffSizeScroll:AddAnchor("TOPLEFT", BuffSizeLabel, "BOTTOMLEFT", 0, 7)
+    BuffSizeScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.BuffSizeScroll = BuffSizeScroll
+
+    local BuffSizeSettingLabel = w:CreateChildWidget("label", "BuffSizeSettingLabel", 0, true)
+    BuffSizeSettingLabel:SetExtent(30, 20)
+    BuffSizeSettingLabel:AddAnchor("LEFT", BuffSizeLabel, "RIGHT", 7, 0)
+    BuffSizeSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(BuffSizeSettingLabel, FONT_COLOR.BLUE)
+    local bg = BuffSizeSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", BuffSizeSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", BuffSizeSettingLabel, 5, 6)
+    BuffSizeSettingLabel.bg = bg
+    w.BuffSizeScroll.BuffSizeSettingLabel = BuffSizeSettingLabel
+
+    local str = string.format("%d", settings.buffsize)
+    w.BuffSizeScroll.BuffSizeSettingLabel:SetText(tostring(str))
+
+    function w:Refresh(settings, settingschanged)
+        preview:Refresh(settings, settingschanged)
+        preview:RemoveAllAnchors() -- should remove anchors before moving one
+        preview:AddAnchor("TOPLEFT", w, 400, 75)
+
+    end
 
     function w:OnClose()
         w:Show(false)
@@ -254,7 +445,44 @@ local function CreateViewOfSettingsFrame()
         settings.bartransparency = value
         settingschanged = true
     end
+
+    function w.WidthScroll:OnSliderChanged(arg)
+        local value = w.WidthScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.WidthScroll.widthSettingLabel:SetText(tostring(str))
+        settings.width = value
+        settingschanged = true
+    end
+
+    function w.HPHeightScroll:OnSliderChanged(arg)
+        local value = w.HPHeightScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.HPHeightScroll.HPHeightSettingLabel:SetText(tostring(str))
+        settings.hpheight = value
+        settingschanged = true
+    end
+
+    function w.MPHeightScroll:OnSliderChanged(arg)
+        local value = w.MPHeightScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.MPHeightScroll.MPHeightSettingLabel:SetText(tostring(str))
+        settings.mpheight = value
+        settingschanged = true
+    end
+
+    function w.BuffSizeScroll:OnSliderChanged(arg)
+        local value = w.BuffSizeScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.BuffSizeScroll.BuffSizeSettingLabel:SetText(tostring(str))
+        settings.buffsize = value
+        settingschanged = true
+    end
+
     w.transparencyScroll:SetHandler("OnSliderChanged", w.transparencyScroll.OnSliderChanged)
+    w.WidthScroll:SetHandler("OnSliderChanged", w.WidthScroll.OnSliderChanged)
+    w.HPHeightScroll:SetHandler("OnSliderChanged", w.HPHeightScroll.OnSliderChanged)
+    w.MPHeightScroll:SetHandler("OnSliderChanged", w.MPHeightScroll.OnSliderChanged)
+    w.BuffSizeScroll:SetHandler("OnSliderChanged", w.BuffSizeScroll.OnSliderChanged)
 
     w.showThiccCheckButton:SetChecked(settings.showbars)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)
@@ -269,9 +497,7 @@ local function CreateViewOfSettingsFrame()
 
     return w
 end
-local SettingsFrame
-local SettingsButton
-local raidmanager
+
 
 
 local function ShowSettings()
@@ -280,16 +506,15 @@ end
 
 
 local function Load() 
-
-    globals = require("thiccbars//common")
-    CreateRaidMember = require("thiccbars//member")
+    membermethods = require("thiccbars//member")
+    CreateRaidMember = membermethods.CreateRaidMember
+    SetViewOfRaidMember = membermethods.SetViewOfRaidMember
     settings = LoadSettings()
 
     CheckSettings()
 
     SettingsFrame = CreateViewOfSettingsFrame()
     SettingsFrame:Show(false)
-
 
     raidmanager = ADDON:GetContent(UIC.RAID_MANAGER )
 
@@ -335,7 +560,7 @@ local function Load()
     --create raid member tags   
     local party = {}
     for i = 1, 50 do
-        party[i] = CreateRaidMember(w, string.format("party%d", i), "memberWindow", i, ChangeTarget)
+        party[i] = CreateRaidMember(nil, string.format("party%d", i), "memberWindow", i, ChangeTarget, settings)
     end
     w.party = party
 
@@ -375,7 +600,7 @@ local function Unload()
     end
 
 end
-api.On("ShowPopUp", OnRightClickMenu)
+--api.On("ShowPopUp", OnRightClickMenu)
 api.On("UPDATE", OnUpdate)
 
 -- Here we make sure to bind the functions we defined to our addon. This is how the game knows what function to use!

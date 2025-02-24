@@ -556,6 +556,11 @@ function CreateBuffWindow(id, window, maxCount)
   end
   function w:BuffUpdate(target)
 
+    if target == "player" then
+        button = self.button[1]
+        button:Show(true)
+        return
+    end
     local count
     local debuffs = GetWatchedDebuffs(target)
     count = #debuffs or 0
@@ -606,104 +611,127 @@ end
 
 
 
-function SetViewOfRaidMember(parent, ownId, index)
-  local w = api.Interface:CreateEmptyWindow(parent, "UIParent")
+function SetViewOfRaidMember(name, ownId, index, parent)
+    local w
+    if parent == nil then
+        w = api.Interface:CreateEmptyWindow(name, "UIParent")
+    else
+        w = parent:CreateChildWidget("emptywidget", "eventWindow", 0, true)
+    end
+    w:SetExtent(globals.MEMBER_WIDTH, globals.MEMBER_HEIGHT)
+    
+    
+    
+    w:Show(true)
+    local bg = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "background")
+    bg:SetCoords(33, 141, 7, 7)
+    bg:SetInset(3, 3, 3, 3)
+    bg:SetColor(1, 1, 1, 0.8)
+    --bg:Clickable(false)
+    local eventWindow = w:CreateChildWidget("emptywidget", "eventWindow", 0, true)
+    eventWindow:AddAnchor("TOPLEFT", w, 0, 0)
+    eventWindow:AddAnchor("BOTTOMRIGHT", w, 0, 0)
+    eventWindow:Show(true)
+    local hpBar = W_BAR.CreateStatusBarOfRaidFrame(w:GetId() .. ".hpBar", w)
+    hpBar:Show(true)
+    hpBar:Clickable(false)
+    hpBar.statusBar:Clickable(false)
+    hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID)
+    w.hpBar = hpBar
+    
+    local mpBar = W_BAR.CreateStatusBarOfRaidFrame(w:GetId() .. ".mpBar", w)
+    mpBar:Show(true)
+    mpBar:Clickable(false)
+    mpBar.statusBar:Clickable(false)
+    w.mpBar = mpBar
+    --api.Log:Info(TEXTURE_PATH.RAID)
+    local selectedIcon = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "overlay")
+    selectedIcon:SetInset(7, 7, 7, 7)
+    --selectedIcon:SetCoords(87, 123, 15, 15)
+    selectedIcon:SetCoords(87, 123, 15, 15)
+    selectedIcon:SetVisible(true)
+    selectedIcon:SetColor(ConvertColor(50), ConvertColor(219), ConvertColor(39), 1)
+    --combatIcon:Clickable(false)
+    w.selectedIcon = selectedIcon
+    selectedIcon:AddAnchor("TOPLEFT", hpBar, -2, -2)
+    selectedIcon:AddAnchor("BOTTOMRIGHT", mpBar, 2, 1)
+    
+    
+    local leaderMark = W_ICON.CreateLeaderMark(w:GetId() .. ".leaderMark", w)
+    leaderMark:Show(false)
+    w.leaderMark = leaderMark
+    leaderMark:Clickable(false)
+    
+    local nameLabel = w:CreateChildWidget("label", "nameLabel", 0, true)
+    nameLabel:Show(true)
+    nameLabel:Clickable(false)
+    nameLabel:SetLimitWidth(true)
+    nameLabel:SetExtent(112, FONT_SIZE.MIDDLE)
+    nameLabel.style:SetFontSize(FONT_SIZE.MIDDLE)
+    nameLabel.style:SetAlign(ALIGN_LEFT)
+    nameLabel:AddAnchor("TOPLEFT", w, 0, 2)
+    w.nameLabel = nameLabel
+    
+    local guildLabel = w:CreateChildWidget("label", "guildLabel", 0, true)
+    guildLabel:Show(true)
+    guildLabel:Clickable(false)
+    guildLabel:SetLimitWidth(true)
+    guildLabel:SetExtent(112, FONT_SIZE.SMALL)
+    guildLabel.style:SetFontSize(FONT_SIZE.SMALL)
+    guildLabel.style:SetAlign(ALIGN_LEFT)
+    guildLabel:AddAnchor("BOTTOM", nameLabel, 0, FONT_SIZE.SMALL)
+    guildLabel:SetText("Testing please ignore")
+    w.guildLabel = guildLabel
+
+    
+    local marker = w:CreateImageDrawable(TEXTURE_PATH.MAP_ICON, "overlay")
+    marker:SetVisible(false)
+    marker:SetExtent(18, 18)
+    marker:AddAnchor("TOPRIGHT", hpBar, 0, -1)
+    w.marker = marker
+    --marker:Clickable(false)
+    
+    local buffWindow = w:CreateChildWidget("label", "buffwindow", 0 , true)
+    CreateBuffWindow(w:GetId() .. ".buffWindow", buffWindow, 8)
+    --local buffWindow = W_UNIT.CreateBuffWindow(w:GetId() .. ".buffWindow", w, 8, "debuff")
+    buffWindow:Show(true)
+    buffWindow:Clickable(false)
+    w.buffWindow = buffWindow
+    
+    bg:RemoveAllAnchors()
+    bg:AddAnchor("TOPLEFT", hpBar, -3, -3)
+    bg:AddAnchor("BOTTOMRIGHT", mpBar, 2, 3)
+    bg:Show(true)
+    w.bg = bg
+    eventWindow:Raise()
   
-  w:SetExtent(globals.MEMBER_WIDTH, globals.MEMBER_HEIGHT)
 
-
-
-  w:Show(true)
-  local bg = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "background")
-  bg:SetCoords(33, 141, 7, 7)
-  bg:SetInset(3, 3, 3, 3)
-  bg:SetColor(1, 1, 1, 0.8)
-  --bg:Clickable(false)
-  local eventWindow = w:CreateChildWidget("emptywidget", "eventWindow", 0, true)
-  eventWindow:AddAnchor("TOPLEFT", w, 0, 0)
-  eventWindow:AddAnchor("BOTTOMRIGHT", w, 0, 0)
-  eventWindow:Show(true)
-  local hpBar = W_BAR.CreateStatusBarOfRaidFrame(w:GetId() .. ".hpBar", w)
-  hpBar:Show(true)
-  hpBar:Clickable(false)
-  hpBar.statusBar:Clickable(false)
-  hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID)
-  w.hpBar = hpBar
-
-  local mpBar = W_BAR.CreateStatusBarOfRaidFrame(w:GetId() .. ".mpBar", w)
-  mpBar:Show(true)
-  mpBar:Clickable(false)
-  mpBar.statusBar:Clickable(false)
-  w.mpBar = mpBar
-  --api.Log:Info(TEXTURE_PATH.RAID)
-  local selectedIcon = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "overlay")
-  selectedIcon:SetInset(7, 7, 7, 7)
-  --selectedIcon:SetCoords(87, 123, 15, 15)
-  selectedIcon:SetCoords(87, 123, 15, 15)
-  selectedIcon:SetVisible(true)
-  selectedIcon:SetColor(ConvertColor(50), ConvertColor(219), ConvertColor(39), 1)
-  --combatIcon:Clickable(false)
-  w.selectedIcon = selectedIcon
-  selectedIcon:AddAnchor("TOPLEFT", hpBar, -2, -2)
-  selectedIcon:AddAnchor("BOTTOMRIGHT", mpBar, 2, 1)
-  
-
-  local leaderMark = W_ICON.CreateLeaderMark(w:GetId() .. ".leaderMark", w)
-  leaderMark:Show(false)
-  w.leaderMark = leaderMark
-  leaderMark:Clickable(false)
-
-  local nameLabel = w:CreateChildWidget("label", "nameLabel", 0, true)
-  nameLabel:Show(true)
-  nameLabel:Clickable(false)
-  nameLabel:SetLimitWidth(true)
-  nameLabel:SetExtent(112, FONT_SIZE.MIDDLE)
-  nameLabel.style:SetFontSize(FONT_SIZE.MIDDLE)
-  nameLabel.style:SetAlign(ALIGN_LEFT)
-  nameLabel:AddAnchor("TOPLEFT", w, 0, 2)
-  w.nameLabel = nameLabel
-
-  local marker = w:CreateImageDrawable(TEXTURE_PATH.MAP_ICON, "overlay")
-  marker:SetVisible(false)
-  marker:SetExtent(18, 18)
-  marker:AddAnchor("TOPRIGHT", hpBar, 0, -1)
-  w.marker = marker
-  --marker:Clickable(false)
-
-  local buffWindow = w:CreateChildWidget("label", "buffwindow", 0 , true)
-  CreateBuffWindow(w:GetId() .. ".buffWindow", buffWindow, 8)
-  --local buffWindow = W_UNIT.CreateBuffWindow(w:GetId() .. ".buffWindow", w, 8, "debuff")
-  buffWindow:Show(true)
-  buffWindow:Clickable(false)
-  w.buffWindow = buffWindow
-
-  bg:RemoveAllAnchors()
-  bg:AddAnchor("TOPLEFT", hpBar, -3, -3)
-  bg:AddAnchor("BOTTOMRIGHT", mpBar, 2, 3)
-  bg:Show(true)
-  w.bg = bg
-  eventWindow:Raise()
-  
-
-  function w:SetSimpleMode(simple)
+  function w:SetSimpleMode(settings)
     self.simple = simple
-
+    self:SetExtent(settings.width, settings.hpheight + settings.mpheight)
     self.hpBar:RemoveAllAnchors()
     self.hpBar:AddAnchor("TOPLEFT", self, 0, 0)
     self.hpBar:AddAnchor("TOPRIGHT", self, 0, 0)
-    self.hpBar:SetHeight(28)
+    self.hpBar:SetHeight(settings.hpheight)
     self.mpBar:RemoveAllAnchors()
     self.mpBar:AddAnchor("TOPLEFT", self.hpBar, "BOTTOMLEFT", 0, -1)
     self.mpBar:AddAnchor("TOPRIGHT", self.hpBar, "BOTTOMRIGHT", 0, -1)
-    self.mpBar:SetHeight(6)
+    self.mpBar:SetHeight(settings.mpheight)
     self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
+
+    if settings.mpheight > 0 then
+        self.mpBar:Show(true)
+    else
+        self.mpBar:Show(false)
+    end
+
     self.leaderMark:RemoveAllAnchors()
     self.leaderMark:AddAnchor("TOPLEFT", self, 2, 3)
     self.buffWindow:RemoveAllAnchors()
-    self.buffWindow:AddAnchor("TOP", self.nameLabel, "BOTTOM", 0, 4)
-    self.buffWindow:AddAnchor("LEFT", self, 1, 0)
-    self.buffWindow:AddAnchor("BOTTOMRIGHT", self.mpBar, "TOPRIGHT", -1, -1)
-    self.buffWindow:SetLayout(12, 16, 0, 2, false)
+    --self.buffWindow:AddAnchor("TOP", self.nameLabel, "BOTTOM", 0, 4)
+    --self.buffWindow:AddAnchor("LEFT", self, 1, 0)
+    self.buffWindow:AddAnchor("BOTTOMLEFT", self.mpBar, 0, -settings.buffsize)
+    self.buffWindow:SetLayout(12, settings.buffsize, 0, 2, false)
     self.buffWindow:SetVisibleBuffCount(8)
 
   end

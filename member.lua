@@ -388,15 +388,20 @@ STATUSBAR_STYLE = {
 }
 
 SetViewOfRaidMember = require("thiccbars//member_view")
-function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
-  local w = SetViewOfRaidMember(name, ownId, index)
+function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
+  local w = SetViewOfRaidMember(name, ownId, index, parent)
   w:Show(false)
   w.memberIndex = index
   w.target = string.format("team%d", w.memberIndex)
-  w:SetSimpleMode(false)
+  w:SetSimpleMode(settings)
   function w:SetName(name)
     if name ~= nil then
       w.nameLabel:SetText(name)
+    end
+  end
+  function w:SetGuild(name)
+    if name ~= nil then
+      w.guildLabel:SetText(name)
     end
   end
   function w:SetMaxHp(maxHp)
@@ -424,15 +429,22 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
     local myId = api.Unit:GetUnitId("target")
     local name = api.Unit:GetUnitNameById(unitid)
     local myName = api.Unit:GetUnitNameById(myId)
+    local info = api.Unit:GetUnitInfoById(unitid)
+
+    --api.Log:Info(info)
     if name == myName then
       self.nameLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
+      self.guildLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
       self.selectedIcon:Show(true)
     else
       self.nameLabel.style:SetColor(1, 1, 1, 1)
+      self.guildLabel.style:SetColor(1, 1, 1, 1)
       self.selectedIcon:Show(false)
     end
     self:SetName(name)
+    self:SetGuild("<" .. info.expeditionName .. ">")
   end
+
   function w:UpdateMaxHp()
     local maxHp = api.Unit:UnitMaxHealth(w.target)
     self:SetMaxHp(maxHp)
@@ -578,73 +590,80 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
     end
     self.bg:SetColor(1, 1, 1, 0.8)
   end
-  function w:Refresh(settings, settingschanged)
-    if settingschanged then
-        self:TranslucenceFrame(settings.bartransparency / 100)
-    end
-    if settings.showbars == false then
-        self:Show(false)
-        return
-    end
-    local unitid = api.Unit:GetUnitId(w.target)
-    local myId = api.Unit:GetUnitId("player")
-    if unitid == myId then
-        self:Show(false)
-        return
-    end
+    function w:Refresh(settings, settingschanged)
+        if settingschanged then
+            self:TranslucenceFrame(settings.bartransparency / 100)
+            self:SetSimpleMode(settings)
+        end
+        if settings.showbars == false then
+            self:Show(false)
+            return
+        end
+        local unitid = api.Unit:GetUnitId(w.target)
+        local myId = api.Unit:GetUnitId("player")
+        if unitid == myId then
+            if w.target ~= "player" then
+                self:Show(false)
+                return
+            end
+        end
 
-    if api.Unit:UnitIsTeamMember(self.target) == true then
+    if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player" then
 
-      local pos = api.Unit:GetUnitScreenPosition(self.target)
-      --api.Log:Info(self.target)
-      --local x, y, z = api.Unit:UnitWorldPosition(self.target)
-      --z = z
+        if self.target ~= "player" then
+            --local pos = api.Unit:GetUnitScreenPosition(self.target)
+            --api.Log:Info(self.target)
+            --local x, y, z = api.Unit:UnitWorldPosition(self.target)
+            --z = z
       
-      local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
-      if offsetX == nil then
-        self:Show(false)
-        return
-      end
-      if offsetZ < 0 then
-        self:Show(false)
-        return
-      end
-      --api.Log:Info(offsetZ)
-      offsetX = math.ceil(offsetX)
-      offsetY = math.ceil(offsetY)
-      self:RemoveAllAnchors() -- should remove anchors before moving one
-      self:AddAnchor("TOPLEFT", "UIParent", offsetX - 62, offsetY - 45)
+            local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
+            if offsetX == nil then
+                self:Show(false)
+                return
+            end
+            if offsetZ < 0 then
+                self:Show(false)
+                return
+            end
+            --api.Log:Info(offsetZ)
+            offsetX = math.ceil(offsetX)
+            offsetY = math.ceil(offsetY) - 22
+            self:RemoveAllAnchors() -- should remove anchors before moving one
+            offsetXHalf = math.ceil(settings.width / 2)
+            offsetYHalf = math.ceil((settings.hpheight + settings.mpheight) / 2)
+            self:AddAnchor("TOPLEFT", "UIParent", offsetX - offsetXHalf, offsetY - offsetYHalf)
+        end
 
-      self:Show(true)
-      --self:UpdateRoleOfHpBarTexture()
-      self:UpdateName()
-      self:UpdateMaxHp()
-      self:UpdateHp()
-      self:UpdateMaxMp()
-      self:UpdateMp()
-      self:UpdateBuff()
-      self:UpdateLeaderMark()
-      self:UpdateDistance()
-      self:UpdateBackground()
-      if settings.ctrlenabled and api.Input:IsControlKeyDown() then
-          self.eventWindow:Show(false)
-          self:Clickable(false)
-          return
-      else
-          self:Clickable(true)
-          self.eventWindow:Show(true)
-      end
-      if settings.shiftenabled and api.Input:IsShiftKeyDown() then
-          self.eventWindow:Show(false)
-          self:Clickable(false)
-          return
-      else
-          self:Clickable(true)
-          self.eventWindow:Show(true)
-      end
-      return true
+        self:Show(true)
+        --self:UpdateRoleOfHpBarTexture()
+        self:UpdateName()
+        self:UpdateMaxHp()
+        self:UpdateHp()
+        self:UpdateMaxMp()
+        self:UpdateMp()
+        self:UpdateBuff()
+        self:UpdateLeaderMark()
+        self:UpdateDistance()
+        self:UpdateBackground()
+        if settings.ctrlenabled and api.Input:IsControlKeyDown() then
+            self.eventWindow:Show(false)
+            self:Clickable(false)
+            return
+        else
+            self:Clickable(true)
+            self.eventWindow:Show(true)
+        end
+        if settings.shiftenabled and api.Input:IsShiftKeyDown() then
+            self.eventWindow:Show(false)
+            self:Clickable(false)
+            return
+        else
+            self:Clickable(true)
+            self.eventWindow:Show(true)
+        end
+    return true
     else
-      self:Show(false)
+        self:Show(false)
     end
     return false
   end
@@ -655,7 +674,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
     if self:IsVisible() == false then
       return
     end
-    if arg == "LeftButton" and w.target ~= nil then
+    --arg == "LeftButton" and 
+    if w.target ~= nil then
       ChangeTarget(w.target)
     end
   end
@@ -817,4 +837,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget)
   end
   return w
 end
-return CreateRaidMember
+local retval = {}
+retval.CreateRaidMember = CreateRaidMember
+retval.SetViewOfRaidMember = SetViewOfRaidMember
+return retval
