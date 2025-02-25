@@ -10,7 +10,7 @@ local sandbox_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.2"
+  version = "1.2.1"
 }
 
 local nextcheck = false
@@ -95,6 +95,11 @@ function DoUpdate()
     if SettingsFrame:IsVisible() then
         SettingsFrame:Refresh(settings, settingschanged)
     end
+    --local mousex, mousey = api.Input:GetMousePos()
+   
+    --mousex = math.ceil(mousex / settings.width)
+    --mousey = math.ceil(mousey / (settings.hpheight + settings.mpheight))
+    
     settingschanged = false
 end
 

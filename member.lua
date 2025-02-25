@@ -401,7 +401,10 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   end
   function w:SetGuild(name)
     if name ~= nil then
-      w.guildLabel:SetText(name)
+        w.guildLabel:Show(true)
+        w.guildLabel:SetText(name)
+    else
+        w.guildLabel:Show(false)
     end
   end
   function w:SetMaxHp(maxHp)
@@ -442,7 +445,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self.selectedIcon:Show(false)
     end
     self:SetName(name)
-    self:SetGuild("<" .. info.expeditionName .. ">")
+    if info.expeditionName ~= nil then
+        self:SetGuild("<" .. info.expeditionName .. ">")
+    end
   end
 
   function w:UpdateMaxHp()

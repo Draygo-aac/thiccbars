@@ -680,7 +680,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     guildLabel.style:SetFontSize(FONT_SIZE.SMALL)
     guildLabel.style:SetAlign(ALIGN_LEFT)
     guildLabel:AddAnchor("BOTTOM", nameLabel, 0, FONT_SIZE.SMALL)
-    guildLabel:SetText("Testing please ignore")
+    guildLabel:SetText("")
     w.guildLabel = guildLabel
 
     
