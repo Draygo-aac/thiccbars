@@ -446,7 +446,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self:SetName(name)
     if info.expeditionName ~= nil then
-        self:SetGuild("<" .. info.expeditionName .. ">")
+        self:SetGuild(" " .. info.expeditionName)
     end
   end
 
@@ -457,6 +457,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   function w:UpdateHp()
     local hp = api.Unit:UnitHealth(w.target)
     self:SetHp(hp)
+    self.dead = hp == 0
   end
   function w:UpdateMaxMp()
     local maxMp = api.Unit:UnitMaxMana(w.target)
@@ -511,18 +512,24 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   end
   function w:UpdateNameLabelWidth()
     local width = self.hpBar:GetWidth()
+
     if self.marker:IsVisible() then
       width = width - self.marker:GetWidth()
       if self.leaderMark:IsVisible() then
         width = width - self.leaderMark:GetWidth()
       end
     else
-      width = width - 5
+      --width = width - 5
     if self.leaderMark:IsVisible() then
         width = width - self.leaderMark:GetWidth()
       end
     end
-    self.nameLabel:SetWidth(width)
+    local nameWidth = width
+    if self.distanceLabel:IsVisible() then
+        width = width - self.distanceLabel:GetWidth()
+    end
+    self.nameLabel:SetWidth(nameWidth)
+    self.guildLabel:SetWidth(width)
   end
   function w:UpdateLeaderMark()
     local authority = api.Unit:UnitTeamAuthority(self.target)
@@ -539,10 +546,10 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self:UpdateNameLabelWidth()
     if self.leaderMark:IsVisible() then
      self.nameLabel:RemoveAllAnchors()
-      self.nameLabel:AddAnchor("TOPLEFT", self.leaderMark, "TOPRIGHT", 2, -1)
+      self.nameLabel:AddAnchor("TOPLEFT", self.leaderMark, "TOPRIGHT", 2, -3)
     else
       self.nameLabel:RemoveAllAnchors()
-      self.nameLabel:AddAnchor("TOPLEFT", self.hpBar, 3, 2)
+      self.nameLabel:AddAnchor("TOPLEFT", self.hpBar, 3, 0)
     end
 
   end
@@ -584,6 +591,12 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self:Show(false)
       return
     end
+    distance = math.abs(math.ceil(distance))
+    --api.Log:Info(distance)
+    local str = string.format("%dm", distance)
+    self.distanceLabel:SetText(str)
+    local width = self.distanceLabel.style:GetTextWidth(str)
+    self.distanceLabel:SetWidth(width)
     self:Show(true)
   end
   function w:UpdateBackground()
@@ -595,7 +608,18 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self.bg:SetColor(1, 1, 1, 0.8)
   end
+
+    function w:Position()
+
+        self:RemoveAllAnchors() -- should remove anchors before moving one
+        self:AddAnchor("TOPLEFT", "UIParent", w.posX, w.posY)
+    end
+
     function w:Refresh(settings, settingschanged)
+        self.tileroot = nil
+        self.idx = 0
+        self.posX = 0
+        self.posY = 0
         if settingschanged then
             self:TranslucenceFrame(settings.bartransparency / 100)
             self:SetSimpleMode(settings)
@@ -633,10 +657,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
             --api.Log:Info(offsetZ)
             offsetX = math.ceil(offsetX)
             offsetY = math.ceil(offsetY) - 22
-            self:RemoveAllAnchors() -- should remove anchors before moving one
+            
             offsetXHalf = math.ceil(settings.width / 2)
             offsetYHalf = math.ceil((settings.hpheight + settings.mpheight) / 2)
-            self:AddAnchor("TOPLEFT", "UIParent", offsetX - offsetXHalf, offsetY - offsetYHalf)
+
+            w.posX = offsetX - offsetXHalf
+            w.posY = offsetY - offsetYHalf
+           
         end
 
         self:Show(true)
@@ -646,7 +673,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         self:UpdateHp()
         self:UpdateMaxMp()
         self:UpdateMp()
-        self:UpdateBuff()
+        self:UpdateBuff(self.dead)
         self:UpdateLeaderMark()
         self:UpdateDistance()
         self:UpdateBackground()
@@ -684,7 +711,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       ChangeTarget(w.target)
     end
   end
-  
+
 
   event:SetHandler("OnClick", event.OnClick)
 

@@ -6,16 +6,70 @@ globals = require("thiccbars//common")
 -- First up is the addon definition!
 -- This information is shown in the Addon Manager.
 -- You also specify "unload" which is the function called when unloading your addon.
-local sandbox_addon = {
+local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.2.1"
+  version = "1.3"
 }
+--create a 50x50 grid template. 
+local gridtemplate = {
+0,0,
+0,1,
+1,0,
+1,1,
+0,2,
+1,2,
+0,3,
+1,3,
+0,4,
+1,4,
+2,0,
+2,1,
+2,2,
+2,3,
+2,4,
+0,5,
+1,5,
+2,5,
+0,6,
+1,6,
+2,6,
+3,0,
+3,1,
+3,2,
+3,3,
+3,4,
+3,5,
+3,6,
+0,7,
+1,7,
+2,7,
+3,7,
+0,8,
+1,8,
+2,8,
+3,8,
+4,0,
+4,1,
+4,2,
+4,3,
+4,4,
+4,5,
+4,6,
+4,7,
+4,8,
+0,9,
+1,9,
+2,9,
+3,9,
+4,9
+}
+local tiles = {}
 
 local nextcheck = false
 local settingschanged = true
--- The Load Function is called as soon as the game loads its UI. Use it to initialize anything you need!
+
 local w
 local settings = {}
 local event
@@ -28,13 +82,10 @@ local SettingsFrame
 local SettingsButton
 local raidmanager
 
-
-
-
 function LoadSettings()
-	
 	return api.File:Read(file)
 end
+
 function SaveSettings()
     api.File:Write(file, settings)
     settingschanged = true
@@ -57,29 +108,217 @@ function CheckSettings()
         settings.ctrlenabled = true
     end
     if settings.bartransparency == nil then
-        settings.bartransparency = 100
+        settings.bartransparency = globals.TRANSPARENCY
     end
     if settings.width == nil then
         settings.width = globals.MEMBER_WIDTH
     end
     if settings.hpheight == nil then
-        settings.hpheight = 28
+        settings.hpheight = globals.MEMBER_HPHEIGHT
     end
     if settings.mpheight == nil then
-        settings.mpheight = 6
+        settings.mpheight = globals.MEMBER_MPHEIGHT
     end
     if settings.buffsize == nil then
-        settings.buffsize = 16
+        settings.buffsize = globals.BUFF_ICONSIZE 
+    end
+    if settings.autotile == nil then
+        settings.autotile = false
+    end
+end
+
+local raid = {}
+
+local function TestOverlap(a, b)
+    local x1 = a.posX
+    local y1 = a.posY
+    local w = settings.width
+    local h = settings.hpheight + settings.mpheight 
+    local x2 = b.posX
+    local y2 = b.posY
+
+    return x1 < x2 + w and
+           x2 < x1 + w and
+           y1 < y2 + h and
+           y2 < y1 + h
+end
+
+local WritePosition
+local MoveParent
+local Merge
+local CheckOnMove
+
+local function ClearTiles()
+    for i = 1, #tiles do
+        table.remove(tiles)
+    end
+end
+
+local function CreateTile(parent)
+    local tile = {}
+    tile.parent = parent
+    tile.members = {}
+    table.insert(tile.members, parent)
+    table.insert(tiles, tile)
+    tile.idx = #tiles
+    tile.deleted = false
+    parent.tileroot = tile
+    return tile
+end
+
+local function WritePosition(tile, member, index)
+    local gtx = (index * 2) - 1
+    local frameposx = gridtemplate[gtx]
+    local frameposy = gridtemplate[gtx + 1]
+
+    local posX = tile.parent.posX
+    local posY = tile.parent.posY
+    local offsetX = frameposx * (settings.width + 1)
+    local offsetY = frameposy * (settings.hpheight + settings.mpheight + 1)
+    member.posX = posX + offsetX
+    member.posY = posY + offsetY
+    CheckOnMove(member, index)
+end
+
+function AddTileMember(tile, frame)
+    table.insert(tile.members, frame)
+    frame.tileroot = tile
+    frame.idx = #tile.members
+end
+
+CheckOnMove = function(member, index)
+    for i = 1, index - 1 do
+        local test = raid[i]
+        if test.tileroot ~= member.tileroot then
+            if TestOverlap(member, test) then
+                if member.tileroot ~= nil then
+                    if test.tileroot ~= nil then
+                        Merge(test.tileroot, member.tileroot)
+                    else
+                        AddToTile(member.tileroot, test)
+                    end
+
+                elseif test.tileroot ~= nil then
+                    AddToTile(test.tileroot, member)
+                else
+                    tileroot = CreateTile(tile)
+                    AddToTile(tileroot, frame)                     
+                end
+            end
+        end
+    end
+end
+
+local function MoveParent(newparent, oldparent)
+    local tile = oldparent.tileroot
+    if tile == nil then
+        return
+    end
+    oldparent.posX = newparent.posX
+    oldparent.posY = newparent.posY
+    for i = 1, #tile.members do
+        local member = tile.members[i]
+        WritePosition(tile, member, i)
+    end
+end
+
+AddToTile = function(tile, frame)
+    AddTileMember(tile, frame)
+    local parent = tile.parent
+    WritePosition(tile, frame, frame.idx)
+end
+
+Merge = function(to, from)
+    if to.idx == from.idx then
+        return
+    end
+    if from.deleted then
+        return
+    end
+    from.deleted = true
+    local totalmember = #from.members
+    for i = 1, #from.members  do
+       
+        local member = from.members[i]
+        table.insert(to.members, member)
+    end
+
+    local basex = to.members[1].posX
+    local basey = to.members[1].posY
+    local total = basex + basey
+    for i = 1, #to.members do
+        local member = to.members[i]
+        member.idx = i
+        member.tileroot = to
+        local comp = member.posX + member.posY
+        
+        if comp < total then
+            basex = member.posX
+            basey = member.posY
+            total = basex + basey
+        end
+    end
+    to.members[1].posX = basex
+    to.members[1].posY = basey
+    for i = 1, #to.members do
+        WritePosition(to, to.members[i], i)
     end
 end
 
 
-
-local function OnRightClickMenu(popup_menu)
-  
-
+local function GetOverlappingTile(frame, index)
+    for i = 1, #raid do
+        if i ~= index then
+            local test = w.party[i]
+            if frame ~= test then
+                if TestOverlap(frame, test) then
+                    return true, test
+                end
+            end
+        end
+    end
+    return false, nil
+end
+local function SortFunction(a, b)
+    return a.posX + a.posY < b.posX + b.posY
+end
+local function CreateRaidArray()
+    local numberinraid = #raid
+    for i= 1, numberinraid do
+        table.remove(raid)
+    end
+    for i = 1, #w.party do
+        local member = w.party[i]
+        if member:IsVisible() then
+            table.insert(raid, member)
+        end
+    end
+    table.sort(raid, SortFunction)
 end
 
+local function DoTiling()
+    ClearTiles()
+    CreateRaidArray()
+    -- api.Log:Info(#raid)
+    for i = 1, #raid do
+        local frame = raid[i]
+        local overlapping, overlapframe = GetOverlappingTile(frame, i)
+        if overlapping then
+            if overlapframe.tileroot ~= nil then
+                if frame.tileroot == nil then
+                    AddToTile(overlapframe.tileroot, frame)
+                else
+                    Merge(overlapframe.tileroot, frame.tileroot)
+                end
+            elseif frame.tileroot ~= nil then
+                AddToTile(frame.tileroot, overlapframe)
+            else
+                local tileroot = CreateTile(overlapframe)
+                AddToTile(tileroot, frame)
+            end
+        end
+    end
+end
 
 function DoUpdate()
     if w == nil then
@@ -92,15 +331,18 @@ function DoUpdate()
         local party = w.party[i]
         party:Refresh(settings, settingschanged)
     end
+    if settings.autotile then
+        DoTiling()
+    end
+    for i = 1, #w.party do
+        local party = w.party[i]
+        party:Position()
+    end
     if SettingsFrame:IsVisible() then
         SettingsFrame:Refresh(settings, settingschanged)
     end
-    --local mousex, mousey = api.Input:GetMousePos()
-   
-    --mousex = math.ceil(mousex / settings.width)
-    --mousey = math.ceil(mousey / (settings.hpheight + settings.mpheight))
-    
     settingschanged = false
+    return true, nil
 end
 
 local function OnUpdate()
@@ -118,7 +360,6 @@ local ondragoldwatched
 local watchtargetframe
 
 local function hijackOnDrag(arg)
-
     ondragold(arg)
     --if player is moving the window we escape
     if api.Input:IsShiftKeyDown() then
@@ -137,24 +378,20 @@ local function hijackWatchedOnDrag(arg)
     watchtargetframe.eventWindow:OnClick("LeftButton")
 end
 
-
-
 local function ChangeTarget(arg)
     targetunitframe.target = arg
     targetunitframe.eventWindow:OnClick("LeftButton")
     targetunitframe.target = "target"
 end
 
-
-
 local function CreateViewOfSettingsFrame()
-    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 420)
+    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 500)
     w:SetTitle("Settings")
     w:AddAnchor("CENTER", "UIParent", 0, 0)
     w:SetCloseOnEscape(true)
 
     local closeButton = w:CreateChildWidget("button", "closeButton", 0, false)
-    closeButton:SetText("Close")
+    closeButton:SetText("Save")
     closeButton:AddAnchor("BOTTOM", w, -45, -10)
     ApplyButtonSkin(closeButton, BUTTON_BASIC.DEFAULT)
 
@@ -178,7 +415,7 @@ local function CreateViewOfSettingsFrame()
 
     preview:RemoveAllAnchors() -- should remove anchors before moving one
     preview:AddAnchor("TOPLEFT", w, 350, 30)
-
+    preview.buffWindow:SetLayout(12, settings.buffsize, 0, 2, false)
     w.preview = preview
 
     showThiccLabel = w:CreateChildWidget("label", "showThiccLabel", 0, true)
@@ -192,13 +429,28 @@ local function CreateViewOfSettingsFrame()
     w.showThiccLabel = showThiccLabel
 
     w.showThiccCheckButton = checkButton.CreateCheckButton("showThiccCheckButton", w, nil)
-    w.showThiccCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 0)
+    w.showThiccCheckButton:AddAnchor("RIGHT", showThiccLabel, 100, 0)
     w.showThiccCheckButton:SetButtonStyle("default")
     w.showThiccCheckButton:Show(true)
 
+    tilingLabel = w:CreateChildWidget("label", "tilingLabel", 0, true)
+    tilingLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
+    tilingLabel:SetText("Auto-Tiling (Beta, not recommended):")
+    tilingLabel:SetHeight(FONT_SIZE.LARGE)
+    tilingLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    tilingLabel.style:SetAlign(3)
+    ApplyTextColor(tilingLabel, FONT_COLOR.DEFAULT)
+
+    w.tilingLabel = tilingLabel
+
+    w.tilingCheckButton = checkButton.CreateCheckButton("tilingCheckButton", w, nil)
+    w.tilingCheckButton:AddAnchor("RIGHT", tilingLabel, 275, 0)
+    w.tilingCheckButton:SetButtonStyle("default")
+    w.tilingCheckButton:Show(true)
+
 
     keyLabel = w:CreateChildWidget("label", "keyLabel", 0, true)
-    keyLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 1)
+    keyLabel:AddAnchor("BOTTOMLEFT", tilingLabel, 15, FONT_SIZE.LARGE + ROWPADDING)
     keyLabel:SetText("While below key is held, mouse clicks will pass through thicc bars. ")
     keyLabel:SetHeight(FONT_SIZE.MIDDLE)
     keyLabel.style:SetFontSize(FONT_SIZE.MIDDLE)
@@ -208,7 +460,7 @@ local function CreateViewOfSettingsFrame()
     w.keyLabel = keyLabel
 
     shiftLabel = w:CreateChildWidget("label", "shiftLabel", 0, true)
-    shiftLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 2)
+    shiftLabel:AddAnchor("BOTTOMLEFT", keyLabel, -15, (FONT_SIZE.LARGE + ROWPADDING))
     shiftLabel:SetText("Shift:")
     shiftLabel:SetHeight(FONT_SIZE.LARGE)
     shiftLabel.style:SetFontSize(FONT_SIZE.LARGE)
@@ -218,12 +470,12 @@ local function CreateViewOfSettingsFrame()
     w.shiftLabel = shiftLabel
 
     w.shiftCheckButton = checkButton.CreateCheckButton("shiftCheckButton", w, nil)
-    w.shiftCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 2)
+    w.shiftCheckButton:AddAnchor("RIGHT", shiftLabel, 100, 0)
     w.shiftCheckButton:SetButtonStyle("default")
     w.shiftCheckButton:Show(true)   
 
     controlLabel = w:CreateChildWidget("label", "controlLabel", 0, true)
-    controlLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 3)
+    controlLabel:AddAnchor("BOTTOMLEFT", shiftLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
     controlLabel:SetText("Control:")
     controlLabel:SetHeight(FONT_SIZE.LARGE)
     controlLabel.style:SetFontSize(FONT_SIZE.LARGE)
@@ -233,15 +485,14 @@ local function CreateViewOfSettingsFrame()
     w.controlLabel = controlLabel
 
     w.controlCheckButton = checkButton.CreateCheckButton("controlCheckButton", w, nil)
-    w.controlCheckButton:AddAnchor("TOPLEFT", w, 100, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 3)
+    w.controlCheckButton:AddAnchor("RIGHT", controlLabel, 100, 0)
     w.controlCheckButton:SetButtonStyle("default")
     w.controlCheckButton:Show(true)
 
-    --w:CreateChildWidgetByType()
     local transparencyLabel = w:CreateChildWidget("label", "transparencyLabel", 0, true)
     transparencyLabel:SetHeight(FONT_SIZE.LARGE)
     transparencyLabel:SetAutoResize(true)
-    transparencyLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 4)
+    transparencyLabel:AddAnchor("BOTTOMLEFT", controlLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
     transparencyLabel:SetText("Transparency")
     transparencyLabel.style:SetFontSize(FONT_SIZE.LARGE)
     ApplyTextColor(transparencyLabel, FONT_COLOR.DEFAULT)
@@ -251,9 +502,6 @@ local function CreateViewOfSettingsFrame()
     transparencyScroll:SetMinMaxValues(0, 100)
     transparencyScroll:SetInitialValue(settings.bartransparency, false)
     transparencyScroll:UseWheel()
-
-   
-
     transparencyScroll:AddAnchor("TOPLEFT", transparencyLabel, "BOTTOMLEFT", 0, 5)
     transparencyScroll:AddAnchor("RIGHT", w, -15, 0)
     w.transparencyScroll = transparencyScroll
@@ -277,7 +525,7 @@ local function CreateViewOfSettingsFrame()
     local WidthLabel = w:CreateChildWidget("label", "WidthLabel", 0, true)
     WidthLabel:SetHeight(FONT_SIZE.LARGE)
     WidthLabel:SetAutoResize(true)
-    WidthLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 6)
+    WidthLabel:AddAnchor("TOPLEFT", transparencyScroll, "BOTTOMLEFT", 0, 0)
     WidthLabel:SetText("Width")
     WidthLabel.style:SetFontSize(FONT_SIZE.LARGE)
     ApplyTextColor(WidthLabel, FONT_COLOR.DEFAULT)
@@ -287,9 +535,6 @@ local function CreateViewOfSettingsFrame()
     WidthScroll:SetMinMaxValues(50, 150)
     WidthScroll:SetInitialValue(settings.width, false)
     WidthScroll:UseWheel()
-
-   
-
     WidthScroll:AddAnchor("TOPLEFT", WidthLabel, "BOTTOMLEFT", 0, 7)
     WidthScroll:AddAnchor("RIGHT", w, -15, 0)
     w.WidthScroll = WidthScroll
@@ -312,7 +557,7 @@ local function CreateViewOfSettingsFrame()
     local HPHeightLabel = w:CreateChildWidget("label", "HPHeightLabel", 0, true)
     HPHeightLabel:SetHeight(FONT_SIZE.LARGE)
     HPHeightLabel:SetAutoResize(true)
-    HPHeightLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 8)
+    HPHeightLabel:AddAnchor("TOPLEFT", WidthScroll, "BOTTOMLEFT", 0, 0)
     HPHeightLabel:SetText("HP Height")
     HPHeightLabel.style:SetFontSize(FONT_SIZE.LARGE)
     ApplyTextColor(HPHeightLabel, FONT_COLOR.DEFAULT)
@@ -322,9 +567,6 @@ local function CreateViewOfSettingsFrame()
     HPHeightScroll:SetMinMaxValues(5, 50)
     HPHeightScroll:SetInitialValue(settings.hpheight, false)
     HPHeightScroll:UseWheel()
-
-   
-
     HPHeightScroll:AddAnchor("TOPLEFT", HPHeightLabel, "BOTTOMLEFT", 0, 7)
     HPHeightScroll:AddAnchor("RIGHT", w, -15, 0)
     w.HPHeightScroll = HPHeightScroll
@@ -344,11 +586,10 @@ local function CreateViewOfSettingsFrame()
     local str = string.format("%d", settings.hpheight)
     w.HPHeightScroll.HPHeightSettingLabel:SetText(tostring(str))
 
-
     local MPHeightLabel = w:CreateChildWidget("label", "MPHeightLabel", 0, true)
     MPHeightLabel:SetHeight(FONT_SIZE.LARGE)
     MPHeightLabel:SetAutoResize(true)
-    MPHeightLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 10)
+    MPHeightLabel:AddAnchor("TOPLEFT", HPHeightScroll, "BOTTOMLEFT", 0, 0)
     MPHeightLabel:SetText("MP Height")
     MPHeightLabel.style:SetFontSize(FONT_SIZE.LARGE)
     ApplyTextColor(MPHeightLabel, FONT_COLOR.DEFAULT)
@@ -358,9 +599,6 @@ local function CreateViewOfSettingsFrame()
     MPHeightScroll:SetMinMaxValues(0, 30)
     MPHeightScroll:SetInitialValue(settings.mpheight, false)
     MPHeightScroll:UseWheel()
-
-   
-
     MPHeightScroll:AddAnchor("TOPLEFT", MPHeightLabel, "BOTTOMLEFT", 0, 7)
     MPHeightScroll:AddAnchor("RIGHT", w, -15, 0)
     w.MPHeightScroll = MPHeightScroll
@@ -383,7 +621,7 @@ local function CreateViewOfSettingsFrame()
     local BuffSizeLabel = w:CreateChildWidget("label", "BuffSizeLabel", 0, true)
     BuffSizeLabel:SetHeight(FONT_SIZE.LARGE)
     BuffSizeLabel:SetAutoResize(true)
-    BuffSizeLabel:AddAnchor("TOPLEFT", w, 15, 47 + (FONT_SIZE.LARGE + ROWPADDING) * 12)
+    BuffSizeLabel:AddAnchor("TOPLEFT", MPHeightScroll, "BOTTOMLEFT", 0, 0)
     BuffSizeLabel:SetText("Debuff Icon Size")
     BuffSizeLabel.style:SetFontSize(FONT_SIZE.LARGE)
     ApplyTextColor(BuffSizeLabel, FONT_COLOR.DEFAULT)
@@ -393,9 +631,6 @@ local function CreateViewOfSettingsFrame()
     BuffSizeScroll:SetMinMaxValues(0, 50)
     BuffSizeScroll:SetInitialValue(settings.buffsize, false)
     BuffSizeScroll:UseWheel()
-
-   
-
     BuffSizeScroll:AddAnchor("TOPLEFT", BuffSizeLabel, "BOTTOMLEFT", 0, 7)
     BuffSizeScroll:AddAnchor("RIGHT", w, -15, 0)
     w.BuffSizeScroll = BuffSizeScroll
@@ -432,14 +667,22 @@ local function CreateViewOfSettingsFrame()
          settings.showbars = checked
          SaveSettings()
     end
+
     function w:ShiftOnCheckChanged()
           local checked = w.shiftCheckButton:GetChecked()
          settings.shiftenabled = checked  
          SaveSettings()
     end
+
     function w:ControlOnCheckChanged()
          local checked = w.controlCheckButton:GetChecked()
          settings.ctrlenabled = checked
+         SaveSettings()
+    end
+
+    function w:tilingOnCheckChanged()
+         local checked = w.tilingCheckButton:GetChecked()
+         settings.autotile = checked
          SaveSettings()
     end
 
@@ -492,23 +735,19 @@ local function CreateViewOfSettingsFrame()
     w.showThiccCheckButton:SetChecked(settings.showbars)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)
     w.controlCheckButton:SetChecked(settings.ctrlenabled)
+    w.tilingCheckButton:SetChecked(settings.autotile)
 
     w.showThiccCheckButton:SetHandler("OnCheckChanged", w.ThiccOnCheckChanged)
     w.shiftCheckButton:SetHandler("OnCheckChanged", w.ShiftOnCheckChanged)
     w.controlCheckButton:SetHandler("OnCheckChanged", w.ControlOnCheckChanged)
-    closeButton:SetHandler("OnClick", w.OnClose)
-
-    
-
+    w.tilingCheckButton:SetHandler("OnCheckChanged", w.tilingOnCheckChanged)
+    w.closeButton:SetHandler("OnClick", w.OnClose)
     return w
 end
-
-
 
 local function ShowSettings()
 	SettingsFrame:Show(true)
 end
-
 
 local function Load() 
     membermethods = require("thiccbars//member")
@@ -572,16 +811,12 @@ local function Load()
     SaveSettings()
 end
 
--- Unload is called when addons are reloaded.
--- Here you want to destroy your windows and do other tasks you find useful.
 local function Unload()
     if targetoftargetframe ~= nil then
-	   -- info.Click = old
         targetoftargetframe.eventWindow.OnDragStart = ondragold
         event:SetHandler("OnDragStart", event.OnDragStart)
     end
     if watchtargetframe ~= nil then
-	   -- info.Click = old
         watchtargetframe.eventWindow.OnDragStart = ondragoldwatched
         eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
     end
@@ -605,12 +840,11 @@ local function Unload()
     end
 
 end
---api.On("ShowPopUp", OnRightClickMenu)
+
 api.On("UPDATE", OnUpdate)
 
--- Here we make sure to bind the functions we defined to our addon. This is how the game knows what function to use!
-sandbox_addon.OnLoad = Load
-sandbox_addon.OnUnload = Unload
+thicc_addon.OnLoad = Load
+thicc_addon.OnUnload = Unload
 
 
-return sandbox_addon
+return thicc_addon
