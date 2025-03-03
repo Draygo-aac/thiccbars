@@ -1,5 +1,6 @@
 # Thicc Bars
   Addon that improves UI usability and replaces Raid nameplates. Custom nameplates can be turned off in the configuration.
+  
   Clicking Target of Target or Watched target while your mouse is still moving will now select that target. 
   
 ## Configuration
