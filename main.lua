@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.3"
+  version = "1.4"
 }
 --create a 50x50 grid template. 
 local gridtemplate = {
@@ -320,6 +320,13 @@ local function DoTiling()
     end
 end
 
+local targetoftargetframe
+local targetunitframe
+local ondragold
+local ondragoldtarget
+local ondragoldwatched
+local watchtargetframe
+
 function DoUpdate()
     if w == nil then
         return
@@ -330,18 +337,40 @@ function DoUpdate()
     for i = 1, #w.party do
         local party = w.party[i]
         party:Refresh(settings, settingschanged)
+
     end
     if settings.autotile then
         DoTiling()
     end
+    local targetid = api.Unit:GetUnitId("target")
     for i = 1, #w.party do
         local party = w.party[i]
         party:Position()
+        --if is our target, put on top by lowering first
+        if targetid == party.targetid then
+            party:Lower()
+        end
     end
     if SettingsFrame:IsVisible() then
         SettingsFrame:Refresh(settings, settingschanged)
     end
     settingschanged = false
+    -- put watch target second in viewing order
+    w.party[51]:Lower()
+    -- order the rest front to back. 
+    for i = 1, #w.party - 1 do
+        local party = w.party[i]
+        if targetid ~= party.targetid then
+            party:Lower()
+        end
+    end
+    
+    local wt = api.Unit:GetUnitId("watchtarget")
+    if wt ~= nil then
+        watchtargetframe:Show(true)
+    end
+    --api.Log:Info(tostring(wt))
+    --w.party[51]:Raise()
     return true, nil
 end
 
@@ -352,12 +381,7 @@ local function OnUpdate()
     end
 end
 
-local targetoftargetframe
-local targetunitframe
-local ondragold
-local ondragoldtarget
-local ondragoldwatched
-local watchtargetframe
+
 
 local function hijackOnDrag(arg)
     ondragold(arg)
@@ -750,6 +774,7 @@ local function ShowSettings()
 end
 
 local function Load() 
+
     membermethods = require("thiccbars//member")
     CreateRaidMember = membermethods.CreateRaidMember
     SetViewOfRaidMember = membermethods.SetViewOfRaidMember
@@ -790,6 +815,7 @@ local function Load()
     watchtargetframe = ADDON:GetContent(UIC.WATCH_TARGET_FRAME)
     ondragoldwatched = watchtargetframe.eventWindow.OnDragStart
     watchtargetframe.eventWindow.OnDragStart = hijackWatchedOnDrag
+
     eventwatched = watchtargetframe.eventWindow
     eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
 
@@ -804,8 +830,9 @@ local function Load()
     --create raid member tags   
     local party = {}
     for i = 1, 50 do
-        party[i] = CreateRaidMember(nil, string.format("party%d", i), "memberWindow", i, ChangeTarget, settings)
+        party[i] = CreateRaidMember(nil, string.format("team%d", i), "memberWindow", i, ChangeTarget, settings)
     end
+    party[51] = CreateRaidMember(nil, "watchtarget", "memberWindow", 51, ChangeTarget, settings)
     w.party = party
 
     SaveSettings()

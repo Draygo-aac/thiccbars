@@ -392,7 +392,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   local w = SetViewOfRaidMember(name, ownId, index, parent)
   w:Show(false)
   w.memberIndex = index
-  w.target = string.format("team%d", w.memberIndex)
+  w.target = name
   w:SetSimpleMode(settings)
   function w:SetName(name)
     if name ~= nil then
@@ -447,6 +447,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self:SetName(name)
     if info.expeditionName ~= nil then
         self:SetGuild(" " .. info.expeditionName)
+    else
+        self:SetGuild(nil)
     end
   end
 
@@ -492,6 +494,19 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
    -- end
   end
   function w:UpdateRoleOfHpBarTexture()
+    --api.Log:Info(self.target)
+    if self.target == "watchtarget" then
+        local unitid = api.Unit:GetUnitId(self.target)
+        local info = api.Unit:GetUnitInfoById(unitid)
+        
+       -- api.Log:Info("test")
+        if info.faction == "hostile" then
+            self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_DEALER)
+        else
+            self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID)
+        end
+        --api.Log:Info("test2")
+    end
     --local role = api.Unit:GetRole(self.memberIndex)
     --local myMemberIndex = api.Unit:GetTeamPlayerIndex()
     --local isOffline = X2Unit:UnitIsOffline(self.target)
@@ -599,6 +614,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.distanceLabel:SetWidth(width)
     self:Show(true)
   end
+
   function w:UpdateBackground()
     local unitid = api.Unit:GetUnitId(w.target)
     local targetid = api.Unit:GetUnitId("target")
@@ -628,18 +644,18 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
             self:Show(false)
             return
         end
-        local unitid = api.Unit:GetUnitId(w.target)
+        self.targetid = api.Unit:GetUnitId(w.target)
         local myId = api.Unit:GetUnitId("player")
-        if unitid == myId then
+        if self.targetid == myId then
             if w.target ~= "player" then
                 self:Show(false)
                 return
             end
         end
-
-    if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player" then
+    if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" then
 
         if self.target ~= "player" then
+
             --local pos = api.Unit:GetUnitScreenPosition(self.target)
             --api.Log:Info(self.target)
             --local x, y, z = api.Unit:UnitWorldPosition(self.target)
@@ -667,7 +683,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         end
 
         self:Show(true)
-        --self:UpdateRoleOfHpBarTexture()
+        self:UpdateRoleOfHpBarTexture()
         self:UpdateName()
         self:UpdateMaxHp()
         self:UpdateHp()

@@ -613,9 +613,11 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     local selectedIcon = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "overlay")
     selectedIcon:SetInset(7, 7, 7, 7)
 
-    selectedIcon:SetCoords(87, 123, 15, 15)
+    --selectedIcon:SetCoords(87, 123, 15, 15)
+    selectedIcon:SetCoords(79, 203, 18, 23)
     selectedIcon:SetVisible(true)
-    selectedIcon:SetColor(ConvertColor(50), ConvertColor(219), ConvertColor(39), 1)
+    selectedIcon:SetColor(1, 1, 1, 1)
+    --selectedIcon:SetColor(ConvertColor(50), ConvertColor(219), ConvertColor(39), 1)
 
     w.selectedIcon = selectedIcon
     selectedIcon:AddAnchor("TOPLEFT", hpBar, -2, -2)
