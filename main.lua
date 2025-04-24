@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5"
+  version = "1.5.1"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -432,6 +432,7 @@ function DoUpdate()
         markersIcon[i]:Show(false)
         markersIcon[i]:Lower()
     end
+    
     for i = 1, #w.party do
         local party = w.party[i]
         party:Refresh(settings, settingschanged, markers)
@@ -1007,13 +1008,10 @@ local function ShowSettings()
 	SettingsFrame:Show(true)
 end
 local function OnEvent(window, evt, arg1)
-
    -- if arg1 ~= nil then
         --api.File:Write("args.txt", arg1)
    --     api.Log:Info(tostring(arg1))
    -- end
-    
-
 end
 
 local SetMarkerTexture = function(markerTexture, markerIndex)

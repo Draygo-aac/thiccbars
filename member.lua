@@ -344,6 +344,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
 
     function w:Refresh(settings, settingschanged, markers)
+        local show = true
         self.tileroot = nil
         self.idx = 0
         self.posX = 0
@@ -354,14 +355,16 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         end
         if settings.showbars == false then
             self:Show(false)
-            return
+            show = false
+            --return
         end
         self.targetid = api.Unit:GetUnitId(w.target)
         local myId = api.Unit:GetUnitId("player")
         if self.targetid == myId then
             if w.target ~= "player" then
                 self:Show(false)
-                return
+                show = false
+                --return
             end
         end
         if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" then
@@ -376,10 +379,12 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
             local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
             if offsetX == nil then
                 self:Show(false)
+                show = false
                 return
             end
             if offsetZ < 0 then
                 self:Show(false)
+                show = false
                 return
             end
             --api.Log:Info(offsetZ)
@@ -393,8 +398,12 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
             w.posY = offsetY - offsetYHalf
            
         end
+        self:SetMarker(self.targetid, markers)
+        if show == false then
+            return false
+        end
 
-        self:Show(true)
+        self:Show(show)
         self:UpdateRoleOfHpBarTexture()
         self:UpdateName()
         self:UpdateMaxHp()
@@ -405,7 +414,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         self:UpdateLeaderMark()
         self:UpdateDistance()
         self:UpdateBackground()
-        self:SetMarker(self.targetid, markers)
+        
 
         if settings.ctrlenabled and api.Input:IsControlKeyDown() then
             self.eventWindow:Show(false)
