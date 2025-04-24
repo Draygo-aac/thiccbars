@@ -10,60 +10,138 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.4"
+  version = "1.5"
 }
+local widthoff = 0
+local width = 64 - ( widthoff * 2 )
+MARKERSCALER = 50
+local markerCoords = {
+    {
+    0 + widthoff,
+    0,
+    width,
+    75
+    },
+    {
+    64  + widthoff,
+    0,
+    width,
+    77
+    },
+    {
+    128 + widthoff,
+    0,
+    width,
+    75
+    },
+    {
+    192 + widthoff,
+    0,
+    width,
+    75
+    },
+    {
+    0 + widthoff,
+    75,
+    width,
+    75
+    },
+    {
+    64 + widthoff,
+    75,
+    width,
+    75
+    },
+    {
+    128 + widthoff,
+    75,
+    width,
+    75
+    },
+    {
+    192 + widthoff,
+    75,
+    width,
+    75
+    },
+    {
+    0 + widthoff,
+    150,
+    width,
+    75
+    },
+    {
+    64 + widthoff,
+    150,
+    width,
+    75
+    },
+    {
+    128 + widthoff,
+    150,
+    width,
+    75
+    },
+    {
+    192 + widthoff,
+    150,
+    width,
+    75
+    }
+}
+
 --create a 50x50 grid template. 
 local gridtemplate = {
-0,0,
-0,1,
-1,0,
-1,1,
-0,2,
-1,2,
-0,3,
-1,3,
-0,4,
-1,4,
-2,0,
-2,1,
-2,2,
-2,3,
-2,4,
-0,5,
-1,5,
-2,5,
-0,6,
-1,6,
-2,6,
-3,0,
-3,1,
-3,2,
-3,3,
-3,4,
-3,5,
-3,6,
-0,7,
-1,7,
-2,7,
-3,7,
-0,8,
-1,8,
-2,8,
-3,8,
-4,0,
-4,1,
-4,2,
-4,3,
-4,4,
-4,5,
-4,6,
-4,7,
-4,8,
-0,9,
-1,9,
-2,9,
-3,9,
-4,9
+    0,0,
+    0,1,
+    1,0,
+    1,1,
+    0,2,
+    1,2,
+    0,3,
+    1,3,
+    0,4,
+    1,4,
+    2,0,
+    2,1,
+    2,2,
+    2,3,
+    2,4,
+    0,5,
+    1,5,
+    2,5,
+    0,6,
+    1,6,
+    2,6,
+    3,0,
+    3,1,
+    3,2,
+    3,3,
+    3,4,
+    3,5,
+    3,6,
+    0,7,
+    1,7,
+    2,7,
+    3,7,
+    0,8,
+    1,8,
+    2,8,
+    3,8,
+    4,0,
+    4,1,
+    4,2,
+    4,3,
+    4,4,
+    4,5,
+    4,6,
+    4,7,
+    4,8,
+    0,9,
+    1,9,
+    2,9,
+    3,9,
+    4,9
 }
 local tiles = {}
 
@@ -125,9 +203,19 @@ function CheckSettings()
     if settings.autotile == nil then
         settings.autotile = false
     end
+    if settings.iconoffset == nil then
+        settings.iconoffset = 36
+    end
+    if settings.overheadiconsize == nil then
+        settings.overheadiconsize = 34
+    end
+    if settings.markertransparency == nil then
+        settings.markertransparency = 100
+    end
 end
 
 local raid = {}
+
 
 local function TestOverlap(a, b)
     local x1 = a.posX
@@ -265,7 +353,6 @@ Merge = function(to, from)
     end
 end
 
-
 local function GetOverlappingTile(frame, index)
     for i = 1, #raid do
         if i ~= index then
@@ -279,9 +366,11 @@ local function GetOverlappingTile(frame, index)
     end
     return false, nil
 end
+
 local function SortFunction(a, b)
     return a.posX + a.posY < b.posX + b.posY
 end
+
 local function CreateRaidArray()
     local numberinraid = #raid
     for i= 1, numberinraid do
@@ -326,18 +415,36 @@ local ondragold
 local ondragoldtarget
 local ondragoldwatched
 local watchtargetframe
+local markers = {}
+local markersIcon = {}
 
 function DoUpdate()
     if w == nil then
         return
     end
+
     if w.party == nil then
         return
     end
+    for i = 1, 12 do 
+        local markerUnitId = api.Unit:GetOverHeadMarkerUnitId(i)
+        markers[i] = markerUnitId
+        markersIcon[i]:Show(false)
+        markersIcon[i]:Lower()
+    end
     for i = 1, #w.party do
         local party = w.party[i]
-        party:Refresh(settings, settingschanged)
-
+        party:Refresh(settings, settingschanged, markers)
+        local halfwidth = settings.width / 2
+        if party.markerId > 0 then
+            
+            marker = markersIcon[party.markerId]
+            marker:Show(true)
+            --api.Log:Info(party.posX)
+            marker.posX = party.posX + halfwidth
+            marker.posY = party.posY - settings.iconoffset
+            marker:Position()
+        end
     end
     if settings.autotile then
         DoTiling()
@@ -351,8 +458,10 @@ function DoUpdate()
             party:Lower()
         end
     end
+    
     if SettingsFrame:IsVisible() then
-        SettingsFrame:Refresh(settings, settingschanged)
+        
+        SettingsFrame:Refresh(settings, settingschanged, markers)
     end
     settingschanged = false
     -- put watch target second in viewing order
@@ -369,8 +478,6 @@ function DoUpdate()
     if wt ~= nil then
         watchtargetframe:Show(true)
     end
-    --api.Log:Info(tostring(wt))
-    --w.party[51]:Raise()
     return true, nil
 end
 
@@ -380,8 +487,6 @@ local function OnUpdate()
         api.Log:Err(error)
     end
 end
-
-
 
 local function hijackOnDrag(arg)
     ondragold(arg)
@@ -409,7 +514,7 @@ local function ChangeTarget(arg)
 end
 
 local function CreateViewOfSettingsFrame()
-    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 500)
+    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 600)
     w:SetTitle("Settings")
     w:AddAnchor("CENTER", "UIParent", 0, 0)
     w:SetCloseOnEscape(true)
@@ -471,7 +576,6 @@ local function CreateViewOfSettingsFrame()
     w.tilingCheckButton:AddAnchor("RIGHT", tilingLabel, 275, 0)
     w.tilingCheckButton:SetButtonStyle("default")
     w.tilingCheckButton:Show(true)
-
 
     keyLabel = w:CreateChildWidget("label", "keyLabel", 0, true)
     keyLabel:AddAnchor("BOTTOMLEFT", tilingLabel, 15, FONT_SIZE.LARGE + ROWPADDING)
@@ -544,7 +648,6 @@ local function CreateViewOfSettingsFrame()
 
     local str = string.format("%d", settings.bartransparency)
     w.transparencyScroll.percentLabel:SetText(tostring(str))
-
 
     local WidthLabel = w:CreateChildWidget("label", "WidthLabel", 0, true)
     WidthLabel:SetHeight(FONT_SIZE.LARGE)
@@ -674,11 +777,108 @@ local function CreateViewOfSettingsFrame()
     local str = string.format("%d", settings.buffsize)
     w.BuffSizeScroll.BuffSizeSettingLabel:SetText(tostring(str))
 
-    function w:Refresh(settings, settingschanged)
-        preview:Refresh(settings, settingschanged)
+    local OverheadMarkerSizeLabel = w:CreateChildWidget("label", "OverheadMarkerSizeLabel", 0, true)
+    OverheadMarkerSizeLabel:SetHeight(FONT_SIZE.LARGE)
+    OverheadMarkerSizeLabel:SetAutoResize(true)
+    OverheadMarkerSizeLabel:AddAnchor("TOPLEFT", BuffSizeScroll, "BOTTOMLEFT", 0, 0)
+    OverheadMarkerSizeLabel:SetText("Overhead Marker Size")
+    OverheadMarkerSizeLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(OverheadMarkerSizeLabel, FONT_COLOR.DEFAULT)
+
+    local OverheadMarkerSizeScroll = CreateSlider("BuffSizeScroll", OverheadMarkerSizeLabel)
+    OverheadMarkerSizeScroll:SetStep(1)
+    OverheadMarkerSizeScroll:SetMinMaxValues(1, 100)
+    OverheadMarkerSizeScroll:SetInitialValue(settings.overheadiconsize, false)
+    OverheadMarkerSizeScroll:UseWheel()
+    OverheadMarkerSizeScroll:AddAnchor("TOPLEFT", OverheadMarkerSizeLabel, "BOTTOMLEFT", 0, 7)
+    OverheadMarkerSizeScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.OverheadMarkerSizeScroll = OverheadMarkerSizeScroll
+
+    local OverheadMarkerSizeSettingLabel = w:CreateChildWidget("label", "OverheadMarkerSizeSettingLabel", 0, true)
+    OverheadMarkerSizeSettingLabel:SetExtent(30, 20)
+    OverheadMarkerSizeSettingLabel:AddAnchor("LEFT", OverheadMarkerSizeLabel, "RIGHT", 7, 0)
+    OverheadMarkerSizeSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(OverheadMarkerSizeSettingLabel, FONT_COLOR.BLUE)
+    local bg = OverheadMarkerSizeSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", OverheadMarkerSizeSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", OverheadMarkerSizeSettingLabel, 5, 6)
+    OverheadMarkerSizeSettingLabel.bg = bg
+    w.OverheadMarkerSizeScroll.OverheadMarkerSizeSettingLabel = OverheadMarkerSizeSettingLabel
+
+    local str = string.format("%d", settings.overheadiconsize)
+    w.OverheadMarkerSizeScroll.OverheadMarkerSizeSettingLabel:SetText(tostring(str))
+
+
+    local OverheadMarkerOffsetLabel = w:CreateChildWidget("label", "OverheadMarkerOffsetLabel", 0, true)
+    OverheadMarkerOffsetLabel:SetHeight(FONT_SIZE.LARGE)
+    OverheadMarkerOffsetLabel:SetAutoResize(true)
+    OverheadMarkerOffsetLabel:AddAnchor("TOPLEFT", OverheadMarkerSizeScroll, "BOTTOMLEFT", 0, 0)
+    OverheadMarkerOffsetLabel:SetText("Overhead Marker Offset")
+    OverheadMarkerOffsetLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(OverheadMarkerOffsetLabel, FONT_COLOR.DEFAULT)
+
+    local OverheadMarkerOffsetScroll = CreateSlider("OverheadMarkerOffsetScroll", OverheadMarkerOffsetLabel)
+    OverheadMarkerOffsetScroll:SetStep(1)
+    OverheadMarkerOffsetScroll:SetMinMaxValues(-50, 150)
+    OverheadMarkerOffsetScroll:SetInitialValue(settings.iconoffset, false)
+    OverheadMarkerOffsetScroll:UseWheel()
+    OverheadMarkerOffsetScroll:AddAnchor("TOPLEFT", OverheadMarkerOffsetLabel, "BOTTOMLEFT", 0, 7)
+    OverheadMarkerOffsetScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.OverheadMarkerOffsetScroll = OverheadMarkerOffsetScroll
+
+    local OverheadMarkerOffsetSettingLabel = w:CreateChildWidget("label", "OverheadMarkerOffsetSettingLabel", 0, true)
+    OverheadMarkerOffsetSettingLabel:SetExtent(30, 20)
+    OverheadMarkerOffsetSettingLabel:AddAnchor("LEFT", OverheadMarkerOffsetLabel, "RIGHT", 7, 0)
+    OverheadMarkerOffsetSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(OverheadMarkerOffsetSettingLabel, FONT_COLOR.BLUE)
+    local bg = OverheadMarkerOffsetSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", OverheadMarkerOffsetSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", OverheadMarkerOffsetSettingLabel, 5, 6)
+    OverheadMarkerOffsetSettingLabel.bg = bg
+    w.OverheadMarkerOffsetScroll.OverheadMarkerOffsetSettingLabel = OverheadMarkerOffsetSettingLabel
+
+    local str = string.format("%d", settings.iconoffset)
+    w.OverheadMarkerOffsetScroll.OverheadMarkerOffsetSettingLabel:SetText(tostring(str))
+
+
+    local OverheadMarkerTransparencyLabel = w:CreateChildWidget("label", "OverheadMarkerTransparencyLabel", 0, true)
+    OverheadMarkerTransparencyLabel:SetHeight(FONT_SIZE.LARGE)
+    OverheadMarkerTransparencyLabel:SetAutoResize(true)
+    OverheadMarkerTransparencyLabel:AddAnchor("TOPLEFT", OverheadMarkerOffsetScroll, "BOTTOMLEFT", 0, 0)
+    OverheadMarkerTransparencyLabel:SetText("Overhead Marker Transparency")
+    OverheadMarkerTransparencyLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(OverheadMarkerTransparencyLabel, FONT_COLOR.DEFAULT)
+
+    local OverheadMarkerTransparencyScroll = CreateSlider("OverheadMarkerTransparencyScroll", OverheadMarkerTransparencyLabel)
+    OverheadMarkerTransparencyScroll:SetStep(1)
+    OverheadMarkerTransparencyScroll:SetMinMaxValues(0, 100)
+    OverheadMarkerTransparencyScroll:SetInitialValue(settings.markertransparency, false)
+    OverheadMarkerTransparencyScroll:UseWheel()
+    OverheadMarkerTransparencyScroll:AddAnchor("TOPLEFT", OverheadMarkerTransparencyLabel, "BOTTOMLEFT", 0, 7)
+    OverheadMarkerTransparencyScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.OverheadMarkerTransparencyScroll = OverheadMarkerTransparencyScroll
+
+    local OverheadMarkerTransparencySettingLabel = w:CreateChildWidget("label", "OverheadMarkerTransparencySettingLabel", 0, true)
+    OverheadMarkerTransparencySettingLabel:SetExtent(30, 20)
+    OverheadMarkerTransparencySettingLabel:AddAnchor("LEFT", OverheadMarkerTransparencyLabel, "RIGHT", 7, 0)
+    OverheadMarkerTransparencySettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(OverheadMarkerTransparencySettingLabel, FONT_COLOR.BLUE)
+    local bg = OverheadMarkerTransparencySettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", OverheadMarkerTransparencySettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", OverheadMarkerTransparencySettingLabel, 5, 6)
+    OverheadMarkerTransparencySettingLabel.bg = bg
+    w.OverheadMarkerTransparencyScroll.OverheadMarkerTransparencySettingLabel = OverheadMarkerTransparencySettingLabel
+
+    local str = string.format("%d", settings.markertransparency)
+    w.OverheadMarkerTransparencyScroll.OverheadMarkerTransparencySettingLabel:SetText(tostring(str))
+
+    function w:Refresh(settings, settingschanged, markers)
+        preview:Refresh(settings, settingschanged, markers)
         preview:RemoveAllAnchors() -- should remove anchors before moving one
         preview:AddAnchor("TOPLEFT", w, 400, 75)
-
     end
 
     function w:OnClose()
@@ -750,11 +950,45 @@ local function CreateViewOfSettingsFrame()
         settingschanged = true
     end
 
+    function w.OverheadMarkerSizeScroll:OnSliderChanged(arg)
+        local value = w.OverheadMarkerSizeScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.OverheadMarkerSizeScroll.OverheadMarkerSizeSettingLabel:SetText(tostring(str))
+        settings.overheadiconsize = value
+        local multiple = settings.overheadiconsize / MARKERSCALER
+        for i = 1,12 do
+            markersIcon[i].marker:SetExtent(60 * multiple, 75 * multiple)
+        end
+        settingschanged = true
+    end
+
+    function w.OverheadMarkerOffsetScroll:OnSliderChanged(arg)
+        local value = w.OverheadMarkerOffsetScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.OverheadMarkerOffsetScroll.OverheadMarkerOffsetSettingLabel:SetText(tostring(str))
+        settings.iconoffset = value
+        settingschanged = true
+    end
+
+    function w.OverheadMarkerTransparencyScroll:OnSliderChanged(arg)
+        local value = w.OverheadMarkerTransparencyScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.OverheadMarkerTransparencyScroll.OverheadMarkerTransparencySettingLabel:SetText(tostring(str))
+        settings.markertransparency = value
+        for i = 1,12 do
+            markersIcon[i]:SetAlpha(settings.markertransparency / 100)
+        end
+        settingschanged = true
+    end
+
     w.transparencyScroll:SetHandler("OnSliderChanged", w.transparencyScroll.OnSliderChanged)
     w.WidthScroll:SetHandler("OnSliderChanged", w.WidthScroll.OnSliderChanged)
     w.HPHeightScroll:SetHandler("OnSliderChanged", w.HPHeightScroll.OnSliderChanged)
     w.MPHeightScroll:SetHandler("OnSliderChanged", w.MPHeightScroll.OnSliderChanged)
     w.BuffSizeScroll:SetHandler("OnSliderChanged", w.BuffSizeScroll.OnSliderChanged)
+    w.OverheadMarkerSizeScroll:SetHandler("OnSliderChanged", w.OverheadMarkerSizeScroll.OnSliderChanged)
+    w.OverheadMarkerOffsetScroll:SetHandler("OnSliderChanged", w.OverheadMarkerOffsetScroll.OnSliderChanged)
+    w.OverheadMarkerTransparencyScroll:SetHandler("OnSliderChanged", w.OverheadMarkerTransparencyScroll.OnSliderChanged)
 
     w.showThiccCheckButton:SetChecked(settings.showbars)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)
@@ -772,6 +1006,20 @@ end
 local function ShowSettings()
 	SettingsFrame:Show(true)
 end
+local function OnEvent(window, evt, arg1)
+
+   -- if arg1 ~= nil then
+        --api.File:Write("args.txt", arg1)
+   --     api.Log:Info(tostring(arg1))
+   -- end
+    
+
+end
+
+local SetMarkerTexture = function(markerTexture, markerIndex)
+
+    markerTexture:SetCoords(markerCoords[markerIndex][1], markerCoords[markerIndex][2], markerCoords[markerIndex][3], markerCoords[markerIndex][4])
+end
 
 local function Load() 
 
@@ -781,7 +1029,26 @@ local function Load()
     settings = LoadSettings()
 
     CheckSettings()
+    local multiple = settings.overheadiconsize / MARKERSCALER
+    for i = 1, 12 do
+        table.insert(markers, "0x00")
+        local wIcon = api.Interface:CreateEmptyWindow("overheadMarker" .. i, "UIParent")
+        marker = wIcon:CreateImageDrawable(TEXTURE_PATH.OVERHEAD_MARK, "overlay")
+        marker:SetVisible(true)
+        marker:SetExtent(64 * multiple, 75 * multiple)
+        SetMarkerTexture(marker, i)
+        marker:AddAnchor("CENTER", wIcon, 0, 0)
+        wIcon.marker = marker
+        wIcon.posX = 0
+        wIcon.posY = 0
+        wIcon:SetAlpha(settings.markertransparency / 100)
+        function wIcon:Position()
 
+            self:RemoveAllAnchors() -- should remove anchors before moving one
+            self:AddAnchor("TOPLEFT", "UIParent", wIcon.posX, wIcon.posY)
+        end
+        table.insert(markersIcon, wIcon)
+    end
     SettingsFrame = CreateViewOfSettingsFrame()
     SettingsFrame:Show(false)
 
@@ -827,6 +1094,9 @@ local function Load()
     w.rowCount = 0
     w.columnCount = 0
 
+    w:SetHandler("OnEvent", OnEvent)
+    --w:RegisterEvent("MOUSE_DOWN")
+
     --create raid member tags   
     local party = {}
     for i = 1, 50 do
@@ -847,7 +1117,8 @@ local function Unload()
         watchtargetframe.eventWindow.OnDragStart = ondragoldwatched
         eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
     end
-   if w ~= nil then
+    if w ~= nil then
+        w:ReleaseHandler("OnEvent")
         for i = 1, #w.party do
             w.party[i]:OnClose()
             w.party[i]:Show(false)
@@ -855,23 +1126,26 @@ local function Unload()
         w.party = nil
         w:Show(false)
         w = nil
-   end
-   if wi ~= nil then
+    end
+    if wi ~= nil then
         wi:Show(false)
         wi = nil
+    end
+    for i = 1,12 do
+
+        markersIcon[i]:Show(false)
+        markersIcon[i] = nil
     end
 
     if raidmanager.thiccButton ~= nil then
         raidmanager.thiccButton:Show(false)
         raidmanager.thiccButton = nil
     end
-
 end
 
 api.On("UPDATE", OnUpdate)
 
 thicc_addon.OnLoad = Load
 thicc_addon.OnUnload = Unload
-
 
 return thicc_addon

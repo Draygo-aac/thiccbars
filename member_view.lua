@@ -1,434 +1,48 @@
-STATUSBAR_STYLE = {
-  S_HP_PARTY = {
-    coords = {
-      301,
-      20,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(86),
-      ConvertColor(198),
-      ConvertColor(239),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(86),
-      ConvertColor(198),
-      ConvertColor(239),
-      1
-    }
-  },
-  S_HP_FRIENDLY = {
-    coords = {
-      301,
-      0,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    }
-  },
-  S_HP_NEUTRAL = {
-    coords = {
-      301,
-      60,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    }
-  },
-  S_HP_HOSTILE = {
-    coords = {
-      301,
-      40,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    }
-  },
-  S_HP_PREEMTIVE_STRIKE = {
-    coords = {
-      301,
-      100,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    }
-  },
-  S_HP_OFFLINE = {
-    coords = {
-      301,
-      80,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    }
-  },
-  S_MP = {
-    coords = {
-      301,
-      140,
-      150,
-      13
-    }
-  },
-  S_MP_OFFLINE = {
-    coords = {
-      301,
-      154,
-      150,
-      13
-    }
-  },
-  L_HP_FRIENDLY = {
-    coords = {
-      0,
-      0,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    }
-  },
-  L_HP_NEUTRAL = {
-    coords = {
-      0,
-      60,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    }
-  },
-  L_HP_HOSTILE = {
-    coords = {
-      0,
-      40,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    }
-  },
-  L_HP_PARTY = {
-    coords = {
-      0,
-      20,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(86),
-      ConvertColor(198),
-      ConvertColor(239),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    }
-  },
-  L_HP_PREEMTIVE_STRIKE = {
-    coords = {
-      0,
-      100,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    }
-  },
-  L_HP_OFFLINE = {
-    coords = {
-      0,
-      80,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    }
-  },
-  L_MP = {
-    coords = {
-      0,
-      140,
-      300,
-      13
-    }
-  },
-  L_MP_OFFLINE = {
-    coords = {
-      0,
-      154,
-      300,
-      13
-    }
-  },
-  HP_RAID = {
-    coords = {
-      0,
-      0,
-      62,
-      27
-    }
-  },
-  HP_RAID_TANKER = {
-    coords = {
-      63,
-      0,
-      62,
-      27
-    }
-  },
-  HP_RAID_DEALER = {
-    coords = {
-      63,
-      28,
-      62,
-      27
-    }
-  },
-  HP_RAID_HEALER = {
-    coords = {
-      0,
-      28,
-      62,
-      27
-    }
-  },
-  HP_RAID_OFFLINE = {
-    coords = {
-      0,
-      56,
-      62,
-      27
-    }
-  },
-  MP_RAID = {
-    coords = {
-      63,
-      72,
-      62,
-      5
-    }
-  },
-  MP_RAID_OFFLINE = {
-    coords = {
-      63,
-      78,
-      62,
-      5
-    }
-  },
-  S_HP_RAID = {
-    coords = {
-      63,
-      84,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_TANKER = {
-    coords = {
-      0,
-      84,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_DEALER = {
-    coords = {
-      63,
-      56,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_HEALER = {
-    coords = {
-      0,
-      101,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_OFFLINE = {
-    coords = {
-      63,
-      101,
-      62,
-      16
-    }
-  },
-  S_MP_RAID = {
-    coords = {
-      0,
-      118,
-      62,
-      4
-    }
-  },
-  S_MP_RAID_OFFLINE = {
-    coords = {
-      63,
-      118,
-      62,
-      4
-    }
-  }
-}
 WATCH_DEBUFF_ID = { 
-18351, -- petify but buff
-20349, 
-18352, --abyssal petrify
-3783, --petrify
-3845, --petrify
-6967, --jola
-21383, --filthy mucus (sealbreaker)
-2869, -- enervate
-2870,
-6955,
-15208,
-2124,
-2745,
-1176,
-4712,
-2835,
-101, --enervate
-467,  --curse
-15210,
-20572, --chilling wind
-20570, 
-20571,
-6184, -- leech
-14284, --distress
-15175,
-6896,
-6904, --cursed flame
-15225, --mark
-15141, --nightmare grinder (belt tk)
-7188, --TK
-2012,
-17159,
-1169,
-4866,
-4286,
-2261,
-551,
-771, --charm
-21434,
-21432
+    18351, -- petify but buff
+    20349, 
+    18352, --abyssal petrify
+    3783, --petrify
+    3845, --petrify
+    6967, --jola
+    21383, --filthy mucus (sealbreaker)
+    2869, -- enervate
+    2870,
+    6955,
+    15208,
+    2124,
+    2745,
+    1176,
+    4712,
+    2835,
+    101, --enervate
+    467,  --curse
+    15210,
+    20572, --chilling wind
+    20570, 
+    20571,
+    6184, -- leech
+    14284, --distress
+    15175,
+    6896,
+    6904, --cursed flame
+    15225, --mark
+    15141, --nightmare grinder (belt tk)
+    7188, --TK
+    2012,
+    17159,
+    1169,
+    4866,
+    4286,
+    2261,
+    551,
+    771, --charm
+    21434,
+    21432
 }
 
 WATCH_DEBUFF_IFDEAD = {
-18353
+    18353
 }
 
 globals = require("thiccbars//common")
@@ -586,6 +200,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     w.posY = 0
     w.tileroot = nil
     w.dead = false
+    w.markerId = 0
 
     w:Show(true)
     local bg = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "background")

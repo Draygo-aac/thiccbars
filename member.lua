@@ -1,392 +1,80 @@
 local MAX_RAID_PARTY_MEMBERS = 5
 local UNIT_VISIBLE_MAX_DISTANCE = 130
-STATUSBAR_STYLE = {
-  S_HP_PARTY = {
-    coords = {
-      301,
-      20,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(86),
-      ConvertColor(198),
-      ConvertColor(239),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(86),
-      ConvertColor(198),
-      ConvertColor(239),
-      1
-    }
-  },
-  S_HP_FRIENDLY = {
-    coords = {
-      301,
-      0,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    }
-  },
-  S_HP_NEUTRAL = {
-    coords = {
-      301,
-      60,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    }
-  },
-  S_HP_HOSTILE = {
-    coords = {
-      301,
-      40,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    }
-  },
-  S_HP_PREEMTIVE_STRIKE = {
-    coords = {
-      301,
-      100,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    }
-  },
-  S_HP_OFFLINE = {
-    coords = {
-      301,
-      80,
-      150,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    }
-  },
-  S_MP = {
-    coords = {
-      301,
-      140,
-      150,
-      13
-    }
-  },
-  S_MP_OFFLINE = {
-    coords = {
-      301,
-      154,
-      150,
-      13
-    }
-  },
-  L_HP_FRIENDLY = {
-    coords = {
-      0,
-      0,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(134),
-      ConvertColor(207),
-      ConvertColor(82),
-      1
-    }
-  },
-  L_HP_NEUTRAL = {
-    coords = {
-      0,
-      60,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(230),
-      ConvertColor(141),
-      ConvertColor(36),
-      1
-    }
-  },
-  L_HP_HOSTILE = {
-    coords = {
-      0,
-      40,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(223),
-      ConvertColor(69),
-      ConvertColor(69),
-      1
-    }
-  },
-  L_HP_PARTY = {
-    coords = {
-      0,
-      20,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(86),
-      ConvertColor(198),
-      ConvertColor(239),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    }
-  },
-  L_HP_PREEMTIVE_STRIKE = {
-    coords = {
-      0,
-      100,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(202),
-      ConvertColor(110),
-      ConvertColor(105),
-      1
-    }
-  },
-  L_HP_OFFLINE = {
-    coords = {
-      0,
-      80,
-      300,
-      19
-    },
-    afterImage_color_up = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    },
-    afterImage_color_down = {
-      ConvertColor(46),
-      ConvertColor(46),
-      ConvertColor(46),
-      1
-    }
-  },
-  L_MP = {
-    coords = {
-      0,
-      140,
-      300,
-      13
-    }
-  },
-  L_MP_OFFLINE = {
-    coords = {
-      0,
-      154,
-      300,
-      13
-    }
-  },
-  HP_RAID = {
-    coords = {
-      0,
-      0,
-      62,
-      27
-    }
-  },
-  HP_RAID_TANKER = {
-    coords = {
-      63,
-      0,
-      62,
-      27
-    }
-  },
-  HP_RAID_DEALER = {
-    coords = {
-      63,
-      28,
-      62,
-      27
-    }
-  },
-  HP_RAID_HEALER = {
-    coords = {
-      0,
-      28,
-      62,
-      27
-    }
-  },
-  HP_RAID_OFFLINE = {
-    coords = {
-      0,
-      56,
-      62,
-      27
-    }
-  },
-  MP_RAID = {
-    coords = {
-      63,
-      72,
-      62,
-      5
-    }
-  },
-  MP_RAID_OFFLINE = {
-    coords = {
-      63,
-      78,
-      62,
-      5
-    }
-  },
-  S_HP_RAID = {
-    coords = {
-      63,
-      84,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_TANKER = {
-    coords = {
-      0,
-      84,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_DEALER = {
-    coords = {
-      63,
-      56,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_HEALER = {
-    coords = {
-      0,
-      101,
-      62,
-      16
-    }
-  },
-  S_HP_RAID_OFFLINE = {
-    coords = {
-      63,
-      101,
-      62,
-      16
-    }
-  },
-  S_MP_RAID = {
-    coords = {
-      0,
-      118,
-      62,
-      4
-    }
-  },
-  S_MP_RAID_OFFLINE = {
-    coords = {
-      63,
-      118,
-      62,
-      4
-    }
-  }
-}
 
+local markerCoords = {
+    {
+    384,
+    48,
+    24,
+    24
+    },
+    {
+    408,
+    48,
+    24,
+    24
+    },
+    {
+    432,
+    48,
+    24,
+    24
+    },
+    {
+    456,
+    48,
+    24,
+    24
+    },
+    {
+    480,
+    48,
+    24,
+    24
+    },
+    {
+    312,
+    72,
+    24,
+    24
+    },
+    {
+    336,
+    72,
+    24,
+    24
+    },
+    {
+    360,
+    72,
+    24,
+    24
+    },
+    {
+    384,
+    72,
+    24,
+    24
+    },
+    {
+    408,
+    72,
+    24,
+    24
+    },
+    {
+    432,
+    72,
+    24,
+    24
+    },
+    {
+    456,
+    72,
+    24,
+    24
+    }
+}
 SetViewOfRaidMember = require("thiccbars//member_view")
 function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   local w = SetViewOfRaidMember(name, ownId, index, parent)
@@ -624,6 +312,30 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self.bg:SetColor(1, 1, 1, 0.8)
   end
+  local SetMarkerTexture = function(markerTexture, markerIndex)
+
+    markerTexture:SetCoords(markerCoords[markerIndex][1], markerCoords[markerIndex][2], markerCoords[markerIndex][3], markerCoords[markerIndex][4])
+  end
+  function w:SetMarker(memberId, markers)
+    self.marker:SetVisible(false)
+    if memberId == nil then
+      return
+    end
+    if self.marker == nil then
+      return
+    end
+    self.markerId = 0
+
+    for i = 1, 12 do
+      local markerUnitId = markers[i]
+      if markerUnitId == memberId then
+        self.marker:SetVisible(true)
+        self.markerId = i
+        SetMarkerTexture(self.marker, i)
+        return
+      end
+    end
+  end
 
     function w:Position()
 
@@ -631,7 +343,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         self:AddAnchor("TOPLEFT", "UIParent", w.posX, w.posY)
     end
 
-    function w:Refresh(settings, settingschanged)
+    function w:Refresh(settings, settingschanged, markers)
         self.tileroot = nil
         self.idx = 0
         self.posX = 0
@@ -652,7 +364,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
                 return
             end
         end
-    if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" then
+        if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" then
 
         if self.target ~= "player" then
 
@@ -693,6 +405,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         self:UpdateLeaderMark()
         self:UpdateDistance()
         self:UpdateBackground()
+        self:SetMarker(self.targetid, markers)
+
         if settings.ctrlenabled and api.Input:IsControlKeyDown() then
             self.eventWindow:Show(false)
             self:Clickable(false)
@@ -736,105 +450,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   end
   event:EnableDrag(true)
   event:SetHandler("OnDragStart", event.OnDragStart)
-  local SetMarkerTexture = function(markerTexture, markerIndex)
-    local markerCoords = {
-      {
-        384,
-        48,
-        24,
-        24
-      },
-      {
-        408,
-        48,
-        24,
-        24
-      },
-      {
-        432,
-        48,
-        24,
-        24
-      },
-      {
-        456,
-        48,
-        24,
-        24
-      },
-      {
-        480,
-        48,
-        24,
-        24
-      },
-      {
-        312,
-        72,
-        24,
-        24
-      },
-      {
-        336,
-        72,
-        24,
-        24
-      },
-      {
-        360,
-        72,
-        24,
-        24
-      },
-      {
-        384,
-        72,
-        24,
-        24
-      },
-      {
-        408,
-        72,
-        24,
-        24
-      },
-      {
-        432,
-        72,
-        24,
-        24
-      },
-      {
-        456,
-        72,
-        24,
-        24
-      }
-    }
-    markerTexture:SetCoords(markerCoords[markerIndex][1], markerCoords[markerIndex][2], markerCoords[markerIndex][3], markerCoords[markerIndex][4])
-  end
-  function w:SetMarker(memberId, markerid)
-    if memberId == nil then
-      return
-    end
-    if self.marker == nil then
-      return
-    end
-    --api.Log:Info(tostring(memberId) .. " ".. tostring(markerid))
-      -- markerUnitId == memberId then
-        self.marker:SetVisible(true)
-        SetMarkerTexture(self.marker, markerid)
-        --return
-      --end
-    --for i = 1, 12 do
-    --  local markerUnitId = X2Unit:GetOverHeadMarkerUnitId(i)
-    --  if markerUnitId == memberId then
-    --    self.marker:SetVisible(true)
-    --    SetMarkerTexture(self.marker, i)
-    --    return
-    --  end
-    --end
-  end
+
+
+
   function event:OnEvent(event, ...)
     if event == "TEAM_MEMBERS_CHANGED" then
       if arg[1] == "owner_changed" and (arg[4] == w.memberIndex or arg[5] == w.memberIndex) then
@@ -864,13 +482,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         w:UpdateNameLabelWidth()
         return
       else
-        w:SetMarker(memberId, arg[2])
+        w:SetMarker(memberId)
       end
       w:UpdateNameLabelWidth()
     elseif event == "ENTERED_WORLD" then
       local memberId = api.Unit:GetUnitId(w.target)
-      --w.marker:SetVisible(false)
-      --w:SetMarker(memberId)
+      w.marker:SetVisible(false)
+      w:SetMarker(memberId)
       w:UpdateNameLabelWidth()
     end
   end
