@@ -191,6 +191,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     local w
     if parent == nil then
         w = api.Interface:CreateEmptyWindow(name, "UIParent")
+        w:SetUILayer("game") --"system", "tooltip", "dialog", "game", "normal", "background", "questdirecting", "hud"
     else
         w = parent:CreateChildWidget("emptywidget", "eventWindow", 0, true)
     end
