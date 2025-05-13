@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5.2"
+  version = "1.5.4"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -211,6 +211,12 @@ function CheckSettings()
     end
     if settings.markertransparency == nil then
         settings.markertransparency = 100
+    end
+    if settings.namesize == nil then
+        settings.namesize = FONT_SIZE.MIDDLE
+    end
+    if settings.guildsize == nil then
+        settings.guildsize = FONT_SIZE.SMALL
     end
 end
 
@@ -515,7 +521,7 @@ local function ChangeTarget(arg)
 end
 
 local function CreateViewOfSettingsFrame()
-    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 600)
+    local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 700)
     w:SetTitle("Settings")
     w:AddAnchor("CENTER", "UIParent", 0, 0)
     w:SetCloseOnEscape(true)
@@ -745,11 +751,77 @@ local function CreateViewOfSettingsFrame()
 
     local str = string.format("%d", settings.mpheight)
     w.MPHeightScroll.MPHeightSettingLabel:SetText(tostring(str))
+    --
+    local NameFontSizeLabel = w:CreateChildWidget("label", "NameFontSizeLabel", 0, true)
+    NameFontSizeLabel:SetHeight(FONT_SIZE.LARGE)
+    NameFontSizeLabel:SetAutoResize(true)
+    NameFontSizeLabel:AddAnchor("TOPLEFT", MPHeightScroll, "BOTTOMLEFT", 0, 0)
+    NameFontSizeLabel:SetText("Name Font Size")
+    NameFontSizeLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(NameFontSizeLabel, FONT_COLOR.DEFAULT)
 
+    local NameFontSizeScroll = CreateSlider("NameFontSizeScroll", NameFontSizeLabel)
+    NameFontSizeScroll:SetStep(1)
+    NameFontSizeScroll:SetMinMaxValues(6, 32)
+    NameFontSizeScroll:SetInitialValue(settings.namesize, false)
+    NameFontSizeScroll:UseWheel()
+    NameFontSizeScroll:AddAnchor("TOPLEFT", NameFontSizeLabel, "BOTTOMLEFT", 0, 7)
+    NameFontSizeScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.NameFontSizeScroll = NameFontSizeScroll
+
+    local NameFontSizeScrollSettingLabel = w:CreateChildWidget("label", "NameFontSizeScrollSettingLabel", 0, true)
+    NameFontSizeScrollSettingLabel:SetExtent(30, 20)
+    NameFontSizeScrollSettingLabel:AddAnchor("LEFT", NameFontSizeLabel, "RIGHT", 7, 0)
+    NameFontSizeScrollSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(NameFontSizeScrollSettingLabel, FONT_COLOR.BLUE)
+    local bg = NameFontSizeScrollSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", NameFontSizeScrollSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", NameFontSizeScrollSettingLabel, 5, 6)
+    NameFontSizeScrollSettingLabel.bg = bg
+    w.NameFontSizeScroll.NameFontSizeScrollSettingLabel = NameFontSizeScrollSettingLabel
+
+    local str = string.format("%d", settings.namesize)
+    w.NameFontSizeScroll.NameFontSizeScrollSettingLabel:SetText(tostring(str))
+
+    --
+    local GuildFontSizeLabel = w:CreateChildWidget("label", "GuildFontSizeLabel", 0, true)
+    GuildFontSizeLabel:SetHeight(FONT_SIZE.LARGE)
+    GuildFontSizeLabel:SetAutoResize(true)
+    GuildFontSizeLabel:AddAnchor("TOPLEFT", NameFontSizeScroll, "BOTTOMLEFT", 0, 0)
+    GuildFontSizeLabel:SetText("Guild Font Size")
+    GuildFontSizeLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    ApplyTextColor(GuildFontSizeLabel, FONT_COLOR.DEFAULT)
+
+    local GuildFontSizeScroll = CreateSlider("GuildFontSizeScroll", GuildFontSizeLabel)
+    GuildFontSizeScroll:SetStep(1)
+    GuildFontSizeScroll:SetMinMaxValues(6, 32)
+    GuildFontSizeScroll:SetInitialValue(settings.guildsize, false)
+    GuildFontSizeScroll:UseWheel()
+    GuildFontSizeScroll:AddAnchor("TOPLEFT", GuildFontSizeLabel, "BOTTOMLEFT", 0, 7)
+    GuildFontSizeScroll:AddAnchor("RIGHT", w, -15, 0)
+    w.GuildFontSizeScroll = GuildFontSizeScroll
+
+    local GuildFontSizeSettingLabel = w:CreateChildWidget("label", "GuildFontSizeSettingLabel", 0, true)
+    GuildFontSizeSettingLabel:SetExtent(30, 20)
+    GuildFontSizeSettingLabel:AddAnchor("LEFT", GuildFontSizeLabel, "RIGHT", 7, 0)
+    GuildFontSizeSettingLabel.style:SetAlign(ALIGN_CENTER)
+    ApplyTextColor(GuildFontSizeSettingLabel, FONT_COLOR.BLUE)
+    local bg = GuildFontSizeSettingLabel:CreateImageDrawable(TEXTURE_PATH.MONEY_WINDOW, "background")
+    bg:SetCoords(0, 0, 190, 29)
+    bg:AddAnchor("TOPLEFT", GuildFontSizeSettingLabel, -3, -6)
+    bg:AddAnchor("BOTTOMRIGHT", GuildFontSizeSettingLabel, 5, 6)
+    GuildFontSizeSettingLabel.bg = bg
+    w.GuildFontSizeScroll.GuildFontSizeSettingLabel = GuildFontSizeSettingLabel
+
+    local str = string.format("%d", settings.guildsize)
+    w.GuildFontSizeScroll.GuildFontSizeSettingLabel:SetText(tostring(str))
+
+    --
     local BuffSizeLabel = w:CreateChildWidget("label", "BuffSizeLabel", 0, true)
     BuffSizeLabel:SetHeight(FONT_SIZE.LARGE)
     BuffSizeLabel:SetAutoResize(true)
-    BuffSizeLabel:AddAnchor("TOPLEFT", MPHeightScroll, "BOTTOMLEFT", 0, 0)
+    BuffSizeLabel:AddAnchor("TOPLEFT", GuildFontSizeScroll, "BOTTOMLEFT", 0, 0)
     BuffSizeLabel:SetText("Debuff Icon Size")
     BuffSizeLabel.style:SetFontSize(FONT_SIZE.LARGE)
     ApplyTextColor(BuffSizeLabel, FONT_COLOR.DEFAULT)
@@ -981,6 +1053,24 @@ local function CreateViewOfSettingsFrame()
         end
         settingschanged = true
     end
+    --
+
+    function w.NameFontSizeScroll:OnSliderChanged(arg)
+        
+        local value = w.NameFontSizeScroll:GetValue() or 0
+       
+        local str = string.format("%d", value)
+        w.NameFontSizeScroll.NameFontSizeScrollSettingLabel:SetText(tostring(str))
+        settings.namesize = value
+        settingschanged = true
+    end
+    function w.GuildFontSizeScroll:OnSliderChanged(arg)
+        local value = w.GuildFontSizeScroll:GetValue() or 0
+        local str = string.format("%d", value)
+        w.GuildFontSizeScroll.GuildFontSizeSettingLabel:SetText(tostring(str))
+        settings.guildsize = value
+        settingschanged = true
+    end
 
     w.transparencyScroll:SetHandler("OnSliderChanged", w.transparencyScroll.OnSliderChanged)
     w.WidthScroll:SetHandler("OnSliderChanged", w.WidthScroll.OnSliderChanged)
@@ -990,6 +1080,8 @@ local function CreateViewOfSettingsFrame()
     w.OverheadMarkerSizeScroll:SetHandler("OnSliderChanged", w.OverheadMarkerSizeScroll.OnSliderChanged)
     w.OverheadMarkerOffsetScroll:SetHandler("OnSliderChanged", w.OverheadMarkerOffsetScroll.OnSliderChanged)
     w.OverheadMarkerTransparencyScroll:SetHandler("OnSliderChanged", w.OverheadMarkerTransparencyScroll.OnSliderChanged)
+    w.NameFontSizeScroll:SetHandler("OnSliderChanged", w.NameFontSizeScroll.OnSliderChanged)
+    w.GuildFontSizeScroll:SetHandler("OnSliderChanged", w.GuildFontSizeScroll.OnSliderChanged)
 
     w.showThiccCheckButton:SetChecked(settings.showbars)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)

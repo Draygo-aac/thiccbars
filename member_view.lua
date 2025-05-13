@@ -324,6 +324,11 @@ function SetViewOfRaidMember(name, ownId, index, parent)
         self.buffWindow:RemoveAllAnchors()
         self.buffWindow:AddAnchor("TOPLEFT", self.hpBar, "TOPLEFT", 0, height - settings.buffsize - 1)
         self.buffWindow:SetVisibleBuffCount(8)
+
+        self.nameLabel.style:SetFontSize(settings.namesize)
+        self.nameLabel:SetExtent(112, settings.namesize)
+
+        self.guildLabel.style:SetFontSize(settings.guildsize)
     end
     function w:TranslucenceFrame(percent)
         self:SetAlpha(percent)
