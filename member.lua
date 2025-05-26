@@ -157,8 +157,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     local mp = api.Unit:UnitMana(w.target)
     self:SetMp(mp)
   end
-  function w:UpdateBuff()
-    w.buffWindow:BuffUpdate(w.target)
+  function w:UpdateBuff(dead)
+    w.buffWindow:BuffUpdate(w.target, dead)
   end
   function w:ChangeHpBarTexture_role(simpleMode, role)
    -- if simpleMode then

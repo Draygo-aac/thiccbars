@@ -45,6 +45,49 @@ WATCH_DEBUFF_IFDEAD = {
     18353
 }
 
+DICTONARY_WATCH_DEBUFF_ID = { 
+    [18351] = true, -- petify but buff
+    [20349] = true, 
+    [18352] = true, --abyssal petrify
+    [3783] = true, --petrify
+    [3845] = true, --petrify
+    [6967] = true, --jola
+    [21383] = true, --filthy mucus (sealbreaker)
+    [2869] = true, -- enervate
+    [2870] = true,
+    [6955] = true,
+    [15208] = true,
+    [2124] = true,
+    [2745] = true,
+    [1176] = true,
+    [4712] = true,
+    [2835] = true,
+    [101] = true, --enervate
+    [467] = true,  --curse
+    [15210] = true,
+    [20572] = true, --chilling wind
+    [20570] = true, 
+    [20571] = true,
+    [6184] = true, -- leech
+    [14284] = true, --distress
+    [15175] = true,
+    [6896] = true,
+    [6904] = true, --cursed flame
+    [15225] = true, --mark
+    [15141] = true, --nightmare grinder (belt tk)
+    [7188] = true, --TK
+    [2012] = true,
+    [17159] = true,
+    [1169] = true,
+    [4866] = true,
+    [4286] = true,
+    [2261] = true,
+    [551] = true,
+    [771] = true, --charm
+    [21434] = true,
+    [21432] = true
+}
+
 globals = require("thiccbars//common")
 
 local BUFF_ANIMATION_TIME = 0.1
@@ -105,17 +148,17 @@ end
 
 function IsInWatchList(buffInfo, dead)
     if dead then
-        for i = 1, #WATCH_DEBUFF_IFDEAD do
-            if buffInfo.buff_id == WATCH_DEBUFF_IFDEAD[i] then
-                return true
-            end
+        if buffInfo.buff_id == 18353 then
+            return true
         end
     else
-        for i = 1, #WATCH_DEBUFF_ID do
-            if buffInfo.buff_id == WATCH_DEBUFF_ID[i] then
-                return true
-            end
-        end
+        return DICTONARY_WATCH_DEBUFF_ID[buffInfo.buff_id] ~= nil
+
+        --for i = 1, #WATCH_DEBUFF_ID do
+        --    if buffInfo.buff_id == WATCH_DEBUFF_ID[i] then
+        --        return true
+        --    end
+        --end
     end
     return false
 end
