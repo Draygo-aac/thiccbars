@@ -1,46 +1,3 @@
-WATCH_DEBUFF_ID = { 
-    18351, -- petify but buff
-    20349, 
-    18352, --abyssal petrify
-    3783, --petrify
-    3845, --petrify
-    6967, --jola
-    21383, --filthy mucus (sealbreaker)
-    2869, -- enervate
-    2870,
-    6955,
-    15208,
-    2124,
-    2745,
-    1176,
-    4712,
-    2835,
-    101, --enervate
-    467,  --curse
-    15210,
-    20572, --chilling wind
-    20570, 
-    20571,
-    6184, -- leech
-    14284, --distress
-    15175,
-    6896,
-    6904, --cursed flame
-    15225, --mark
-    15141, --nightmare grinder (belt tk)
-    7188, --TK
-    2012,
-    17159,
-    1169,
-    4866,
-    4286,
-    2261,
-    551,
-    771, --charm
-    21434,
-    21432
-}
-
 WATCH_DEBUFF_IFDEAD = {
     18353
 }
@@ -147,39 +104,40 @@ local function UpdateExtent(wnd, count)
 end
 
 function IsInWatchList(buffInfo, dead)
+    --18353 is abyssal debuffs
+    --2167 is pvp flag
     if dead then
         if buffInfo.buff_id == 18353 then
-            return true
+            return true, false
         end
     else
-        return DICTONARY_WATCH_DEBUFF_ID[buffInfo.buff_id] ~= nil
-
-        --for i = 1, #WATCH_DEBUFF_ID do
-        --    if buffInfo.buff_id == WATCH_DEBUFF_ID[i] then
-        --        return true
-        --    end
-        --end
+        return DICTONARY_WATCH_DEBUFF_ID[buffInfo.buff_id], buffInfo.buff_id == 2167
     end
-    return false
+    return false, false
 end
 
 function GetWatchedDebuffs(target, dead)
+    local pvpDebuff = false
     local watchedDebuffList = {}
     local count = api.Unit:UnitDeBuffCount(target) or 0
     for i = 1, count do
         local buffInfo = api.Unit:UnitDeBuff(target, i)
-        if IsInWatchList(buffInfo, dead) then
+        local watched, pvp = IsInWatchList(buffInfo, dead)
+        if watched then
             table.insert(watchedDebuffList, buffInfo)
         end
+        if pvp then
+            pvpDebuff = true
+        end
     end
-    return watchedDebuffList
+    return watchedDebuffList, pvpDebuff
 end
 
 function CreateBuffWindow(id, window, maxCount)
     local w = SetViewOfBuffWindow(id, window, maxCount)
     w.count = -1
     w.buffTypeMap = {}
-
+    w.pvpDebuff = false
     function w:ShowLifeTime(show)
 
     end
@@ -190,8 +148,10 @@ function CreateBuffWindow(id, window, maxCount)
             button:SetAlpha(0.5)
             return
         end
+        
         local count
-        local debuffs = GetWatchedDebuffs(target, dead)
+        local debuffs, pvpDebuff = GetWatchedDebuffs(target, dead)
+        self.pvpDebuff = pvpDebuff
         count = #debuffs or 0
 
         local buffTypeMap = {}
@@ -245,6 +205,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     w.tileroot = nil
     w.dead = false
     w.markerId = 0
+    w.pvpflag = false
 
     w:Show(true)
     local bg = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "background")
@@ -268,6 +229,17 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     mpBar:Clickable(false)
     mpBar.statusBar:Clickable(false)
     w.mpBar = mpBar
+
+
+    local pvpIcon = w:CreateChildWidget("emptywidget", "pvpIcon", 0, true)
+    pvpIcon:SetExtent(12, 12)
+    pvpIcon:Raise()
+    local iconTexture = pvpIcon:CreateImageDrawable(TEXTURE_PATH.HUD, "background")
+    iconTexture:SetCoords(729, 147, 12, 12)
+    iconTexture:AddAnchor("TOPLEFT", pvpIcon, 0, 0)
+    iconTexture:AddAnchor("BOTTOMRIGHT", pvpIcon, 0, 0)
+    pvpIcon:AddAnchor("TOPRIGHT", hpBar, 0, 0)
+    pvpIcon:Show(false)
 
     local selectedIcon = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "overlay")
     selectedIcon:SetInset(7, 7, 7, 7)

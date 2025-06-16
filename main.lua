@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5.4.1"
+  version = "1.5.5"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -217,6 +217,12 @@ function CheckSettings()
     end
     if settings.guildsize == nil then
         settings.guildsize = FONT_SIZE.SMALL
+    end
+    if settings.showraid == nil then
+        settings.showraid = true
+    end
+    if settings.showmount == nil then
+        settings.showmount = true
     end
 end
 
@@ -473,8 +479,10 @@ function DoUpdate()
     settingschanged = false
     -- put watch target second in viewing order
     w.party[51]:Lower()
+    -- mount in third
+    w.party[52]:Lower()
     -- order the rest front to back. 
-    for i = 1, #w.party - 1 do
+    for i = 1, #w.party - 2 do
         local party = w.party[i]
         if targetid ~= party.targetid then
             party:Lower()
@@ -562,12 +570,43 @@ local function CreateViewOfSettingsFrame()
     showThiccLabel.style:SetAlign(3)
     ApplyTextColor(showThiccLabel, FONT_COLOR.DEFAULT)
 
-    w.showThiccLabel = showThiccLabel
+
+    showRaidLabel = w:CreateChildWidget("label", "showRaidLabel", 0, true)
+    showRaidLabel:AddAnchor("TOPRIGHT", showThiccLabel, "TOPLEFT", 110, 0)
+    showRaidLabel:SetText("Raid:")
+    showRaidLabel:SetHeight(FONT_SIZE.LARGE)
+    showRaidLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    showRaidLabel.style:SetAlign(3)
+    ApplyTextColor(showRaidLabel, FONT_COLOR.DEFAULT)
+
+    w.showRaidLabel = showRaidLabel
+
+    showMountLabel = w:CreateChildWidget("label", "showMountLabel", 0, true)
+    showMountLabel:AddAnchor("TOPRIGHT", showRaidLabel, "TOPLEFT", 55, 0)
+    showMountLabel:SetText("Mount:")
+    showMountLabel:SetHeight(FONT_SIZE.LARGE)
+    showMountLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    showMountLabel.style:SetAlign(3)
+    ApplyTextColor(showMountLabel, FONT_COLOR.DEFAULT)
+
+    w.showMountLabel = showMountLabel
+
 
     w.showThiccCheckButton = checkButton.CreateCheckButton("showThiccCheckButton", w, nil)
     w.showThiccCheckButton:AddAnchor("RIGHT", showThiccLabel, 100, 0)
     w.showThiccCheckButton:SetButtonStyle("default")
     w.showThiccCheckButton:Show(true)
+
+    w.showRaidCheckButton = checkButton.CreateCheckButton("showRaidCheckButton", w, nil)
+    w.showRaidCheckButton:AddAnchor("RIGHT", showRaidLabel, 53, 0)
+    w.showRaidCheckButton:SetButtonStyle("default")
+    w.showRaidCheckButton:Show(true)
+
+    w.showMountCheckButton = checkButton.CreateCheckButton("showMountCheckButton", w, nil)
+    w.showMountCheckButton:AddAnchor("RIGHT", showMountLabel, 68, 0)
+    w.showMountCheckButton:SetButtonStyle("default")
+    w.showMountCheckButton:Show(true)
+
 
     tilingLabel = w:CreateChildWidget("label", "tilingLabel", 0, true)
     tilingLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
@@ -965,6 +1004,18 @@ local function CreateViewOfSettingsFrame()
          SaveSettings()
     end
 
+    function w:ShowRaidOnCheckChanged()
+         local checked = w.showRaidCheckButton:GetChecked()
+         settings.showraid = checked
+         SaveSettings()
+    end
+
+    function w:ShowMountOnCheckChanged()
+         local checked = w.showMountCheckButton:GetChecked()
+         settings.showmount = checked
+         SaveSettings()
+    end
+
     function w:ShiftOnCheckChanged()
           local checked = w.shiftCheckButton:GetChecked()
          settings.shiftenabled = checked  
@@ -1084,14 +1135,21 @@ local function CreateViewOfSettingsFrame()
     w.GuildFontSizeScroll:SetHandler("OnSliderChanged", w.GuildFontSizeScroll.OnSliderChanged)
 
     w.showThiccCheckButton:SetChecked(settings.showbars)
+    w.showRaidCheckButton:SetChecked(settings.showraid)
+    w.showMountCheckButton:SetChecked(settings.showmount)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)
     w.controlCheckButton:SetChecked(settings.ctrlenabled)
     w.tilingCheckButton:SetChecked(settings.autotile)
 
     w.showThiccCheckButton:SetHandler("OnCheckChanged", w.ThiccOnCheckChanged)
+    w.showRaidCheckButton:SetHandler("OnCheckChanged", w.ShowRaidOnCheckChanged)
+    w.showMountCheckButton:SetHandler("OnCheckChanged", w.ShowMountOnCheckChanged)
     w.shiftCheckButton:SetHandler("OnCheckChanged", w.ShiftOnCheckChanged)
     w.controlCheckButton:SetHandler("OnCheckChanged", w.ControlOnCheckChanged)
     w.tilingCheckButton:SetHandler("OnCheckChanged", w.tilingOnCheckChanged)
+
+
+
     w.closeButton:SetHandler("OnClick", w.OnClose)
     return w
 end
@@ -1193,8 +1251,10 @@ local function Load()
         party[i] = CreateRaidMember(nil, string.format("team%d", i), "memberWindow", i, ChangeTarget, settings)
     end
     party[51] = CreateRaidMember(nil, "watchtarget", "memberWindow", 51, ChangeTarget, settings)
+    --playerpet1
+    party[52] = CreateRaidMember(nil, "playerpet1", "memberWindow", 52, ChangeTarget, settings)
     w.party = party
-
+    --party[52]:SetUILayer("dialog")
     SaveSettings()
 end
 

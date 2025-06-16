@@ -1,6 +1,15 @@
 local MAX_RAID_PARTY_MEMBERS = 5
 local UNIT_VISIBLE_MAX_DISTANCE = 130
-
+local LIGHT_PURPLE = {
+  0.737,
+  0.075,
+  1
+  }
+local LIGHT_PURPLE_TARGET = {
+  0.541,
+  0,
+  0.769
+  }
 local markerCoords = {
     {
     384,
@@ -123,13 +132,12 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     local info = api.Unit:GetUnitInfoById(unitid)
 
     --api.Log:Info(info)
-    if name == myName then
-      self.nameLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
-      self.guildLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
+    if myId == unitid then
+      self.selected = true
       self.selectedIcon:Show(true)
     else
-      self.nameLabel.style:SetColor(1, 1, 1, 1)
-      self.guildLabel.style:SetColor(1, 1, 1, 1)
+      self.selected = false
+
       self.selectedIcon:Show(false)
     end
     self:SetName(name)
@@ -157,30 +165,35 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     local mp = api.Unit:UnitMana(w.target)
     self:SetMp(mp)
   end
+
+
+    function w:UpdateTextColor()
+        if self.selected then
+            if self.pvpDebuff then
+                self.nameLabel.style:SetColor(LIGHT_PURPLE_TARGET[1], LIGHT_PURPLE_TARGET[2], LIGHT_PURPLE_TARGET[3], 1)
+                self.guildLabel.style:SetColor(LIGHT_PURPLE_TARGET[1], LIGHT_PURPLE_TARGET[2], LIGHT_PURPLE_TARGET[3], 1)
+            else
+                self.nameLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
+                self.guildLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
+            end
+        else
+            if self.pvpDebuff then
+                self.nameLabel.style:SetColor(LIGHT_PURPLE[1], LIGHT_PURPLE[2], LIGHT_PURPLE[3], 1)
+                self.guildLabel.style:SetColor(LIGHT_PURPLE[1], LIGHT_PURPLE[2], LIGHT_PURPLE[3], 1)
+            else
+                self.nameLabel.style:SetColor(1, 1, 1, 1)
+                self.guildLabel.style:SetColor(1, 1, 1, 1)
+            end
+
+        end
+
+    end
+
   function w:UpdateBuff(dead)
     w.buffWindow:BuffUpdate(w.target, dead)
+    self.pvpDebuff = w.buffWindow.pvpDebuff
   end
-  function w:ChangeHpBarTexture_role(simpleMode, role)
-   -- if simpleMode then
-   --   if role == TMROLE_TANKER then
-   --     self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.S_HP_RAID_TANKER)
-   --   elseif role == TMROLE_HEALER then
-   --     self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.S_HP_RAID_HEALER)
-   --   elseif role == TMROLE_DEALER then
-   --     self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.S_HP_RAID_DEALER)
-   --   else
-   --     self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.S_HP_RAID)
-   --   end
-   -- elseif role == TMROLE_TANKER then
-   --   self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_TANKER)
-   -- elseif role == TMROLE_HEALER then
-   --   self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_HEALER)
-   -- elseif role == TMROLE_DEALER then
-   --   self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_DEALER)
-   -- else
-   --   self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID)
-   -- end
-  end
+
   function w:UpdateRoleOfHpBarTexture()
     --api.Log:Info(self.target)
     if self.target == "watchtarget" then
@@ -195,23 +208,10 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         end
         --api.Log:Info("test2")
     end
-    --local role = api.Unit:GetRole(self.memberIndex)
-    --local myMemberIndex = api.Unit:GetTeamPlayerIndex()
-    --local isOffline = X2Unit:UnitIsOffline(self.target)
-    --if isOffline then
-    --  if self.simple then
-    --    self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.S_HP_RAID_OFFLINE)
-    --  else
-    --    self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_OFFLINE)
-    --  end
-    --else
-    --  self:ChangeHpBarTexture_role(self.simple, role)
-    --  if self.simple then
-    --    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.S_MP_RAID)
-    --  else
-    --    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
-    --  end
-    --end
+    if self.target == "playerpet1" then
+        self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_TANKER)
+    end
+
   end
   function w:UpdateNameLabelWidth()
     local width = self.hpBar:GetWidth()
@@ -256,35 +256,15 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
 
   end
-  --local GetTeamInPlayer = function()
-    --local myMemberIndex = X2Team:GetTeamPlayerIndex()
-    --return string.format("team%d", myMemberIndex)
-  --end
-  function w:UpdateOffline()
-    --if self.target == GetTeamInPlayer() then
-    --  return
-    --end
-    --local isOffline = api.Unit:UnitIsOffline(self.target)
-    --if isOffline then
-    --  self:TranslucenceFrame(false)
-    --  if self.simple then
-    --    self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.S_HP_RAID_OFFLINE)
-    --    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.S_MP_RAID_OFFLINE)
-    --  else
-    --    self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_OFFLINE)
-    --    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID_OFFLINE)
-    --  end
-    --  ApplyTextColor(self.nameLabel, FONT_COLOR.DARK_GRAY)
-    --  self.offlineLabel:Show(not self.simple)
-    --else
-    --  self.offlineLabel:Show(false)
-    --  if self.simple then
-    --    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.S_MP_RAID)
-    --  else
-    --    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
-    --  end
-    --end
+
+  function w:UpdatePvPFlag()
+
+    local flag = api.Unit:UnitIsForceAttack(self.target)
+
+    self.pvpIcon:Show(flag)
+
   end
+
   function w:UpdateDistance()
     if self.target == nil then
       return
@@ -358,6 +338,14 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
             show = false
             --return
         end
+        if settings.showraid == false then
+            self:Show(false)
+            show = false
+        end
+        if self.target == "playerpet1" then
+            show = settings.showmount and settings.showbars
+            self:Show(show)
+        end
         self.targetid = api.Unit:GetUnitId(w.target)
         local myId = api.Unit:GetUnitId("player")
         if self.targetid == myId then
@@ -367,15 +355,10 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
                 --return
             end
         end
-        if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" then
+        if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" or self.target == "playerpet1" then
 
         if self.target ~= "player" then
-
-            --local pos = api.Unit:GetUnitScreenPosition(self.target)
-            --api.Log:Info(self.target)
-            --local x, y, z = api.Unit:UnitWorldPosition(self.target)
-            --z = z
-      
+     
             local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
             if offsetX == nil then
                 self:Show(false)
@@ -387,7 +370,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
                 show = false
                 return
             end
-            --api.Log:Info(offsetZ)
+
             offsetX = math.ceil(offsetX)
             offsetY = math.ceil(offsetY) - 22
             
@@ -414,7 +397,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         self:UpdateLeaderMark()
         self:UpdateDistance()
         self:UpdateBackground()
-        
+        self:UpdatePvPFlag()
+        self:UpdateTextColor()
 
         if settings.ctrlenabled and api.Input:IsControlKeyDown() then
             self.eventWindow:Show(false)
