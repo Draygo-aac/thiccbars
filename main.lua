@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5.5"
+  version = "1.5.5.1"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )

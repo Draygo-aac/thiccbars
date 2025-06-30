@@ -424,12 +424,14 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   end
 
   local event = w.eventWindow
-  function event:OnClick(arg)
-    --api.Log:Info("Click")
+  function event:OnClick(arg, arg1, arg2)
+    if arg == "MiddleButton" then
+        return
+    end
+    --api.Log:Info(tostring(arg) .. tostring(arg1) .. tostring(arg2))
     if self:IsVisible() == false then
       return
     end
-    --arg == "LeftButton" and 
     if w.target ~= nil then
       ChangeTarget(w.target)
     end
