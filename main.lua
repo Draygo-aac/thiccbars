@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5.5.1"
+  version = "1.5.5.2"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -526,7 +526,10 @@ local function ChangeTarget(arg)
     targetunitframe.target = arg
     targetunitframe.eventWindow:OnClick("LeftButton")
     targetunitframe.target = "target"
+    targetunitframe:UpdateAll()
 end
+
+
 
 local function CreateViewOfSettingsFrame()
     local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 700)
@@ -1243,6 +1246,7 @@ local function Load()
     w.columnCount = 0
 
     w:SetHandler("OnEvent", OnEvent)
+    --w:SetHandler("OnUpdate", OnTickUpdate)
     --w:RegisterEvent("MOUSE_DOWN")
 
     --create raid member tags   
@@ -1269,6 +1273,7 @@ local function Unload()
     end
     if w ~= nil then
         w:ReleaseHandler("OnEvent")
+        --w:ReleaseHandler("OnUpdate")
         for i = 1, #w.party do
             w.party[i]:OnClose()
             w.party[i]:Show(false)
@@ -1297,5 +1302,6 @@ api.On("UPDATE", OnUpdate)
 
 thicc_addon.OnLoad = Load
 thicc_addon.OnUnload = Unload
+thicc_addon.OnSettingToggle = ShowSettings
 
 return thicc_addon
