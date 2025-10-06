@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5.5.2"
+  version = "1.5.5.3"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -526,6 +526,7 @@ local function ChangeTarget(arg)
     targetunitframe.target = arg
     targetunitframe.eventWindow:OnClick("LeftButton")
     targetunitframe.target = "target"
+    targetunitframe:ChangedTarget()
     targetunitframe:UpdateAll()
 end
 
