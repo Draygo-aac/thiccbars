@@ -332,6 +332,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         if settingschanged then
             self:TranslucenceFrame(settings.bartransparency / 100)
             self:SetSimpleMode(settings)
+            --local event = self.eventWindow
+            
+            --event:EnableDrag(settings.dragoption)
         end
         if settings.showbars == false then
             self:Show(false)
@@ -443,6 +446,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   function event:OnDragStart()
      self:OnClick("LeftButton")
   end
+
+  --event:EnableDrag(settings.dragoption)
   event:EnableDrag(true)
   event:SetHandler("OnDragStart", event.OnDragStart)
 

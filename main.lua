@@ -10,7 +10,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.5.5.3"
+  version = "1.5.5.4"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -224,6 +224,9 @@ function CheckSettings()
     if settings.showmount == nil then
         settings.showmount = true
     end
+    --if settings.dragoption == nil then
+    --    settings.dragoption = true
+    --end
 end
 
 local raid = {}
@@ -480,7 +483,7 @@ function DoUpdate()
     -- put watch target second in viewing order
     w.party[51]:Lower()
     -- mount in third
-    w.party[52]:Lower()
+    --w.party[52]:Lower()
     -- order the rest front to back. 
     for i = 1, #w.party - 2 do
         local party = w.party[i]
@@ -523,9 +526,17 @@ local function hijackWatchedOnDrag(arg)
 end
 
 local function ChangeTarget(arg)
-    targetunitframe.target = arg
-    targetunitframe.eventWindow:OnClick("LeftButton")
-    targetunitframe.target = "target"
+    --api.Log:Info(arg)
+    api.Unit:TargetUnit(arg)
+    --targetunitframe.target = arg
+    --targetunitframe:Click("LeftButton")
+    --watchtargetframe.target = arg
+    --watchtargetframe:Click()
+       -- targetunitframe:ChangedTarget()
+    --targetunitframe:UpdateAll()
+    --targetunitframe.eventWindow:OnClick("LeftButton")
+    --targetunitframe.target = "target"
+    --targetunitframe:SetTarget(arg)
     targetunitframe:ChangedTarget()
     targetunitframe:UpdateAll()
 end
@@ -648,9 +659,11 @@ local function CreateViewOfSettingsFrame()
     w.shiftLabel = shiftLabel
 
     w.shiftCheckButton = checkButton.CreateCheckButton("shiftCheckButton", w, nil)
-    w.shiftCheckButton:AddAnchor("RIGHT", shiftLabel, 100, 0)
+    w.shiftCheckButton:AddAnchor("RIGHT", shiftLabel, 125, 0)
     w.shiftCheckButton:SetButtonStyle("default")
     w.shiftCheckButton:Show(true)   
+
+
 
     controlLabel = w:CreateChildWidget("label", "controlLabel", 0, true)
     controlLabel:AddAnchor("BOTTOMLEFT", shiftLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
@@ -663,9 +676,25 @@ local function CreateViewOfSettingsFrame()
     w.controlLabel = controlLabel
 
     w.controlCheckButton = checkButton.CreateCheckButton("controlCheckButton", w, nil)
-    w.controlCheckButton:AddAnchor("RIGHT", controlLabel, 100, 0)
+    w.controlCheckButton:AddAnchor("RIGHT", controlLabel, 125, 0)
     w.controlCheckButton:SetButtonStyle("default")
     w.controlCheckButton:Show(true)
+
+    --dragLabel = w:CreateChildWidget("label", "dragLabel", 0, true)
+    --dragLabel:AddAnchor("BOTTOMLEFT", controlLabel, 0, (FONT_SIZE.LARGE + ROWPADDING))
+    --dragLabel:SetText("Select On Drag:")
+    --dragLabel:SetHeight(FONT_SIZE.LARGE)
+    --dragLabel:SetWidth(100)
+    --dragLabel.style:SetFontSize(FONT_SIZE.LARGE)
+    --dragLabel.style:SetAlign(3)
+    --ApplyTextColor(dragLabel, FONT_COLOR.DEFAULT)
+
+    --w.dragLabel = dragLabel
+
+    --w.dragCheckButton = checkButton.CreateCheckButton("dragCheckButton", w, nil)
+    --w.dragCheckButton:AddAnchor("RIGHT", dragLabel, 125, 0)
+    --w.dragCheckButton:SetButtonStyle("default")
+    --w.dragCheckButton:Show(true)   
 
     local transparencyLabel = w:CreateChildWidget("label", "transparencyLabel", 0, true)
     transparencyLabel:SetHeight(FONT_SIZE.LARGE)
@@ -1032,6 +1061,12 @@ local function CreateViewOfSettingsFrame()
          SaveSettings()
     end
 
+    function w:DragOnCheckChanged()
+         local checked = w.dragCheckButton:GetChecked()
+         settings.dragoption = checked
+         SaveSettings()
+    end
+
     function w:tilingOnCheckChanged()
          local checked = w.tilingCheckButton:GetChecked()
          settings.autotile = checked
@@ -1143,6 +1178,7 @@ local function CreateViewOfSettingsFrame()
     w.showMountCheckButton:SetChecked(settings.showmount)
     w.shiftCheckButton:SetChecked(settings.shiftenabled)
     w.controlCheckButton:SetChecked(settings.ctrlenabled)
+   -- w.dragCheckButton:SetChecked(settings.dragoption)
     w.tilingCheckButton:SetChecked(settings.autotile)
 
     w.showThiccCheckButton:SetHandler("OnCheckChanged", w.ThiccOnCheckChanged)
@@ -1150,6 +1186,7 @@ local function CreateViewOfSettingsFrame()
     w.showMountCheckButton:SetHandler("OnCheckChanged", w.ShowMountOnCheckChanged)
     w.shiftCheckButton:SetHandler("OnCheckChanged", w.ShiftOnCheckChanged)
     w.controlCheckButton:SetHandler("OnCheckChanged", w.ControlOnCheckChanged)
+   -- w.dragCheckButton:SetHandler("OnCheckChanged", w.DragOnCheckChanged)
     w.tilingCheckButton:SetHandler("OnCheckChanged", w.tilingOnCheckChanged)
 
 
@@ -1222,21 +1259,24 @@ local function Load()
 
     --target of target frame
     targetoftargetframe = ADDON:GetContent(UIC.TARGET_OF_TARGET_FRAME)
-    ondragold = targetoftargetframe.eventWindow.OnDragStart
-    targetoftargetframe.eventWindow.OnDragStart = hijackOnDrag
-    event = targetoftargetframe.eventWindow
-    event:SetHandler("OnDragStart", event.OnDragStart)
+    --ondragold = targetoftargetframe.eventWindow.OnDragStart
+    --targetoftargetframe.eventWindow.OnDragStart = hijackOnDrag
+    --event = targetoftargetframe.eventWindow
+    --event:SetHandler("OnDragStart", event.OnDragStart)
     
     --target unit frame to get workaround to select target
     targetunitframe = ADDON:GetContent(UIC.TARGET_UNITFRAME)
     
+    --api.File:Write("tuf.txt", targetunitframe)
+
+
     --watch target frame
     watchtargetframe = ADDON:GetContent(UIC.WATCH_TARGET_FRAME)
-    ondragoldwatched = watchtargetframe.eventWindow.OnDragStart
-    watchtargetframe.eventWindow.OnDragStart = hijackWatchedOnDrag
+    --ondragoldwatched = watchtargetframe.eventWindow.OnDragStart
+    --watchtargetframe.eventWindow.OnDragStart = hijackWatchedOnDrag
 
-    eventwatched = watchtargetframe.eventWindow
-    eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
+    --eventwatched = watchtargetframe.eventWindow
+    --eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
 
     w = api.Interface:CreateEmptyWindow("emptywidget", "UIParent")
     w:Clickable(false)
@@ -1255,9 +1295,9 @@ local function Load()
     for i = 1, 50 do
         party[i] = CreateRaidMember(nil, string.format("team%d", i), "memberWindow", i, ChangeTarget, settings)
     end
-    party[51] = CreateRaidMember(nil, "watchtarget", "memberWindow", 51, ChangeTarget, settings)
+    --party[51] = CreateRaidMember(nil, "watchtarget", "memberWindow", 51, ChangeTarget, settings)
     --playerpet1
-    party[52] = CreateRaidMember(nil, "playerpet1", "memberWindow", 52, ChangeTarget, settings)
+    party[51] = CreateRaidMember(nil, "playerpet1", "memberWindow", 52, ChangeTarget, settings)
     w.party = party
     --party[52]:SetUILayer("dialog")
     SaveSettings()
@@ -1265,12 +1305,12 @@ end
 
 local function Unload()
     if targetoftargetframe ~= nil then
-        targetoftargetframe.eventWindow.OnDragStart = ondragold
-        event:SetHandler("OnDragStart", event.OnDragStart)
+        --targetoftargetframe.eventWindow.OnDragStart = ondragold
+        --event:SetHandler("OnDragStart", event.OnDragStart)
     end
     if watchtargetframe ~= nil then
-        watchtargetframe.eventWindow.OnDragStart = ondragoldwatched
-        eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
+        --watchtargetframe.eventWindow.OnDragStart = ondragoldwatched
+        --eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
     end
     if w ~= nil then
         w:ReleaseHandler("OnEvent")
