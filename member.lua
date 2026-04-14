@@ -89,7 +89,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   local w = SetViewOfRaidMember(name, ownId, index, parent)
   w:Show(false)
   w.memberIndex = index
+  w.partyIndex = math.floor((index - 1) / 5) + 1
   w.target = name
+  w.settings = settings
   w:SetSimpleMode(settings)
   function w:SetName(name)
     if name ~= nil then
@@ -165,54 +167,119 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     local mp = api.Unit:UnitMana(w.target)
     self:SetMp(mp)
   end
+  function w:GetRGB(carray)
+    return ConvertColor(carray[1]), ConvertColor(carray[2]), ConvertColor(carray[3]), ConvertColor(carray[4])
+  end
+  function w:SetColor(key)
+    
+    local color = self.settings.barcolors[key]
+    local textcolor = self.settings.textcolors[key]
+    local selectedcolor = self.settings.selectedtextcolors[key]
 
 
-    function w:UpdateTextColor()
-        if self.selected then
-            if self.pvpDebuff then
-                self.nameLabel.style:SetColor(LIGHT_PURPLE_TARGET[1], LIGHT_PURPLE_TARGET[2], LIGHT_PURPLE_TARGET[3], 1)
-                self.guildLabel.style:SetColor(LIGHT_PURPLE_TARGET[1], LIGHT_PURPLE_TARGET[2], LIGHT_PURPLE_TARGET[3], 1)
-            else
-                self.nameLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
-                self.guildLabel.style:SetColor(ConvertColor(252), ConvertColor(219), ConvertColor(39), 1)
-            end
-        else
-            if self.pvpDebuff then
-                self.nameLabel.style:SetColor(LIGHT_PURPLE[1], LIGHT_PURPLE[2], LIGHT_PURPLE[3], 1)
-                self.guildLabel.style:SetColor(LIGHT_PURPLE[1], LIGHT_PURPLE[2], LIGHT_PURPLE[3], 1)
-            else
-                self.nameLabel.style:SetColor(1, 1, 1, 1)
-                self.guildLabel.style:SetColor(1, 1, 1, 1)
-            end
-
-        end
-
+    self.hpBar.statusBar:SetBarColor(self:GetRGB(color))
+    if self.selected then
+      self.nameLabel.style:SetColor(self:GetRGB(selectedcolor))
+      self.guildLabel.style:SetColor(self:GetRGB(selectedcolor))
+    else
+      self.nameLabel.style:SetColor(self:GetRGB(textcolor))
+      self.guildLabel.style:SetColor(self:GetRGB(textcolor))
     end
+  end
+
 
   function w:UpdateBuff(dead)
     w.buffWindow:BuffUpdate(w.target, dead)
     self.pvpDebuff = w.buffWindow.pvpDebuff
+    self.disabled = w.buffWindow.disabled
   end
 
   function w:UpdateRoleOfHpBarTexture()
-    --api.Log:Info(self.target)
     if self.target == "watchtarget" then
-        local unitid = api.Unit:GetUnitId(self.target)
-        local info = api.Unit:GetUnitInfoById(unitid)
-        
-       -- api.Log:Info("test")
-        if info.faction == "hostile" then
-            self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_DEALER)
+      local unitid = api.Unit:GetUnitId(self.target)
+      local info = api.Unit:GetUnitInfoById(unitid)
+
+      if info.faction == "hostile" then
+        self:SetColor("enemy")
+        return
+      end
+      if info.social ~= nil then
+        if info.social == "raid" then
+
         else
-            self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID)
+          if self.pvpDebuff == false then
+            self:SetColor("ally") 
+            return
+          else
+            self:SetColor("allyflagged")
+            return
+          end
         end
-        --api.Log:Info("test2")
+      else
+        if self.pvpDebuff == false then
+          self:SetColor("ally")  
+          return
+        else
+          self:SetColor("allyflagged")
+          return
+        end
+      end
     end
     if self.target == "playerpet1" then
-        self.hpBar:ApplyBarTexture(STATUSBAR_STYLE.HP_RAID_TANKER)
+      self:SetColor("pet")
+      return
     end
+    if self.pvpDebuff then
+      self:SetColor("flagged")
+    else
+      if self.disabled then
+        self:SetColor("disabled")
+        return
+      end
+      if self.settings.enablerolecolors then
+        if self.role == 1 then
+          self:SetColor("defender")
+          return
+        elseif self.role == 2 then
+          self:SetColor("healer")
+          return
+        elseif self.role == 3 then
+          self:SetColor("attacker")
+          return
+        end
+      end
 
-  end
+      self:SetColor("undecided")
+      return
+    end
+  end 
+
+  function w:UpdateRoleOfHpBarTextureParty()
+    if self.pvpDebuff then
+      self:SetColor("pflagged")
+    else
+      if self.disabled then
+        self:SetColor("pdisabled")
+        return
+      end
+      if self.settings.enablerolecolors then
+        if self.role == 1 then
+          self:SetColor("pdefender")
+          return
+        elseif self.role == 2 then
+          self:SetColor("phealer")
+          return
+        elseif self.role == 3 then
+          self:SetColor("pattacker")
+          return
+        end
+      end
+
+      self:SetColor("pundecided")
+      return
+    end
+  end 
+
   function w:UpdateNameLabelWidth()
     local width = self.hpBar:GetWidth()
 
@@ -222,14 +289,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         width = width - self.leaderMark:GetWidth()
       end
     else
-      --width = width - 5
-    if self.leaderMark:IsVisible() then
-        width = width - self.leaderMark:GetWidth()
+      if self.leaderMark:IsVisible() then
+          width = width - self.leaderMark:GetWidth()
       end
     end
     local nameWidth = width
     if self.distanceLabel:IsVisible() then
-        width = width - self.distanceLabel:GetWidth()
+      width = width - self.distanceLabel:GetWidth()
     end
     self.nameLabel:SetWidth(nameWidth)
     self.guildLabel:SetWidth(width)
@@ -262,7 +328,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     local flag = api.Unit:UnitIsForceAttack(self.target)
 
     self.pvpIcon:Show(flag)
-
   end
 
   function w:UpdateDistance()
@@ -293,7 +358,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.bg:SetColor(1, 1, 1, 0.8)
   end
   local SetMarkerTexture = function(markerTexture, markerIndex)
-
     markerTexture:SetCoords(markerCoords[markerIndex][1], markerCoords[markerIndex][2], markerCoords[markerIndex][3], markerCoords[markerIndex][4])
   end
   function w:SetMarker(memberId, markers)
@@ -317,111 +381,121 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
   end
 
-    function w:Position()
+  function w:Position()
 
-        self:RemoveAllAnchors() -- should remove anchors before moving one
-        self:AddAnchor("TOPLEFT", "UIParent", w.posX, w.posY)
+    self:RemoveAllAnchors() -- should remove anchors before moving one
+    self:AddAnchor("TOPLEFT", "UIParent", w.posX, w.posY)
+  end
+
+  function w:Refresh(settings, settingschanged, markers, mypartyidx)
+    local show = true
+    self.tileroot = nil
+    self.idx = 0
+    self.posX = 0
+    self.posY = 0
+    self.settings = settings
+    
+    if settingschanged then
+
+      self:TranslucenceFrame(settings.bartransparency / 100)
+      self:SetSimpleMode(settings)
     end
-
-    function w:Refresh(settings, settingschanged, markers)
-        local show = true
-        self.tileroot = nil
-        self.idx = 0
-        self.posX = 0
-        self.posY = 0
-        if settingschanged then
-            self:TranslucenceFrame(settings.bartransparency / 100)
-            self:SetSimpleMode(settings)
-            --local event = self.eventWindow
-            
-            --event:EnableDrag(settings.dragoption)
-        end
-        if settings.showbars == false then
-            self:Show(false)
-            show = false
-            --return
-        end
-        if settings.showraid == false then
-            self:Show(false)
-            show = false
-        end
-        if self.target == "playerpet1" then
-            show = settings.showmount and settings.showbars
-            self:Show(show)
-        end
-        self.targetid = api.Unit:GetUnitId(w.target)
-        local myId = api.Unit:GetUnitId("player")
-        if self.targetid == myId then
-            if w.target ~= "player" then
-                self:Show(false)
-                show = false
-                --return
-            end
-        end
-        if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" or self.target == "playerpet1" then
-
-        if self.target ~= "player" then
-     
-            local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
-            if offsetX == nil then
-                self:Show(false)
-                show = false
-                return
-            end
-            if offsetZ < 0 then
-                self:Show(false)
-                show = false
-                return
-            end
-
-            offsetX = math.ceil(offsetX)
-            offsetY = math.ceil(offsetY) - 22
-            
-            offsetXHalf = math.ceil(settings.width / 2)
-            offsetYHalf = math.ceil((settings.hpheight + settings.mpheight) / 2)
-
-            w.posX = offsetX - offsetXHalf
-            w.posY = offsetY - offsetYHalf
-           
-        end
-        self:SetMarker(self.targetid, markers)
-        if show == false then
-            return false
-        end
-
-        self:Show(show)
-        self:UpdateRoleOfHpBarTexture()
-        self:UpdateName()
-        self:UpdateMaxHp()
-        self:UpdateHp()
-        self:UpdateMaxMp()
-        self:UpdateMp()
-        self:UpdateBuff(self.dead)
-        self:UpdateLeaderMark()
-        self:UpdateDistance()
-        self:UpdateBackground()
-        self:UpdatePvPFlag()
-        self:UpdateTextColor()
-
-        if settings.ctrlenabled and api.Input:IsControlKeyDown() then
-            self.eventWindow:Show(false)
-            self:Clickable(false)
-            return
-        else
-            self:Clickable(true)
-            self.eventWindow:Show(true)
-        end
-        if settings.shiftenabled and api.Input:IsShiftKeyDown() then
-            self.eventWindow:Show(false)
-            self:Clickable(false)
-            return
-        else
-            self:Clickable(true)
-            self.eventWindow:Show(true)
-        end
-    return true
-    else
+    if settings.showbars == false then
+      self:Show(false)
+      show = false
+    end
+    if settings.showraid == false then
+      self:Show(false)
+      show = false
+    end
+    if self.target == "playerpet1" then
+      show = settings.showmount and settings.showbars
+      self:Show(show)
+    end
+    self.targetid = api.Unit:GetUnitId(w.target)
+    local myId = api.Unit:GetUnitId("player")
+    if self.targetid == myId then
+      if w.target ~= "player" then
         self:Show(false)
+        show = false
+      end
+    end
+    if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" or self.target == "playerpet1" then
+      if self.target ~= "player" then
+     
+        local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
+        if offsetX == nil then
+          self:Show(false)
+          show = false
+          return
+        end
+        if offsetZ < 0 then
+          self:Show(false)
+          show = false
+          return
+        end
+
+        offsetX = math.ceil(offsetX)
+        offsetY = math.ceil(offsetY) - 22
+            
+        offsetXHalf = math.ceil(settings.width / 2)
+        offsetYHalf = math.ceil((settings.hpheight + settings.mpheight) / 2)
+
+        w.posX = offsetX - offsetXHalf
+        w.posY = offsetY - offsetYHalf
+      end
+      self:SetMarker(self.targetid, markers)
+      if show == false then
+        return false
+      end
+      self.role = 0
+      if (self.memberIndex > 0 and self.memberIndex <= 50) then
+        self.role = api.Team:GetRole(self.memberIndex)
+      elseif (self.target == "playerpet1") then
+        self.role = 4
+      elseif api.Unit:UnitIsTeamMember(self.target) == true then
+        local unitid = api.Unit:GetUnitId(w.target)
+        local name = api.Unit:GetUnitNameById(unitid)
+        local idx = api.Team:GetMemberIndexByName(name)
+        self.role = api.Team:GetRole(idx)
+      end
+
+      self:Show(show)
+      self:UpdateName()
+      self:UpdateMaxHp()
+      self:UpdateHp()
+      self:UpdateMaxMp()
+      self:UpdateMp()
+      self:UpdateBuff(self.dead)
+      self:UpdateLeaderMark()
+      self:UpdateDistance()
+      self:UpdateBackground()
+      self:UpdatePvPFlag()
+      if settings.enablepartycolors and mypartyidx == self.partyIndex then
+        self:UpdateRoleOfHpBarTextureParty()
+      else
+        self:UpdateRoleOfHpBarTexture()
+      end
+
+      if settings.ctrlenabled and api.Input:IsControlKeyDown() then
+        self.eventWindow:Show(false)
+        self:Clickable(false)
+        return
+      else
+        self:Clickable(true)
+        self.eventWindow:Show(true)
+      end
+      if settings.shiftenabled and api.Input:IsShiftKeyDown() then
+        self.eventWindow:Show(false)
+        self:Clickable(false)
+        return
+      else
+        self:Clickable(true)
+        self.eventWindow:Show(true)
+      end
+      return true
+    else
+      self:Show(false)
     end
     return false
   end
@@ -431,7 +505,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     if arg == "MiddleButton" then
         return
     end
-    --api.Log:Info(tostring(arg) .. tostring(arg1) .. tostring(arg2))
     if self:IsVisible() == false then
       return
     end
@@ -444,29 +517,17 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   event:SetHandler("OnClick", event.OnClick)
 
   function event:OnDragStart()
-     self:OnClick("LeftButton")
+    self:OnClick("LeftButton")
   end
 
-  --event:EnableDrag(settings.dragoption)
   event:EnableDrag(true)
   event:SetHandler("OnDragStart", event.OnDragStart)
-
-
 
   function event:OnEvent(event, ...)
     if event == "TEAM_MEMBERS_CHANGED" then
       if arg[1] == "owner_changed" and (arg[4] == w.memberIndex or arg[5] == w.memberIndex) then
         w:UpdateLeaderMark()
       end
-      --local func = locale.team.msgFunc[arg1]
-      --if func ~= nil then
-       -- local notifyMsg = func(arg2, arg3)
-        --if notifyMsg ~= nil then
-          --X2Chat:DispatchChatMessage(CMF_PARTY_AND_RAID_INFO, notifyMsg)
-        --else
-        --  LuaAssert(string.format("error - arg2 = %s, arg3 = %s", tostring(arg2), tostring(arg3)))
-        --end
-      --end
     elseif event == "TEAM_MEMBER_DISCONNECTED" then
       if arg[1] == true then
         w:UpdateOffline()
