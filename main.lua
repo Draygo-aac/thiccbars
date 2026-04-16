@@ -4,7 +4,7 @@ local CreateSlider =  require('thiccbars/util/slider')
 checkButton = require('thiccbars/util/check_button')
 globals = require("thiccbars//common")
 
-local ENABLEWATCH = false
+local ENABLEWATCH = true
 
 -- First up is the addon definition!
 -- This information is shown in the Addon Manager.
@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6"
+  version = "1.6.0.1"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
