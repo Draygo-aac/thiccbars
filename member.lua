@@ -393,6 +393,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.idx = 0
     self.posX = 0
     self.posY = 0
+    self.posZ = 0
     self.settings = settings
     
     if settingschanged then
@@ -429,11 +430,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
           show = false
           return
         end
-        if offsetZ < 0 then
-          self:Show(false)
-          show = false
-          return
-        end
+
 
         offsetX = math.ceil(offsetX)
         offsetY = math.ceil(offsetY) - 22
@@ -443,6 +440,12 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
 
         w.posX = offsetX - offsetXHalf
         w.posY = offsetY - offsetYHalf
+        w.posZ = offsetZ
+        if offsetZ < 0 then
+          self:Show(false)
+          show = false
+          return
+        end
       end
       self:SetMarker(self.targetid, markers)
       if show == false then

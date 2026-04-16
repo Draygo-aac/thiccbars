@@ -4,7 +4,7 @@ local CreateSlider =  require('thiccbars/util/slider')
 checkButton = require('thiccbars/util/check_button')
 globals = require("thiccbars//common")
 
-local ENABLEWATCH = true
+local ENABLEWATCH = false
 
 -- First up is the addon definition!
 -- This information is shown in the Addon Manager.
@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.0.1"
+  version = "1.6.1"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -22,6 +22,10 @@ MARKERSCALER = 50
 local HP_STYLE = {
   coords = {301, 120, 150, 20 }
 }
+function math.clamp(num, min, max)
+    return math.max(min, math.min(num, max))
+end
+
 
 local markerCoords = {
     {
@@ -559,10 +563,16 @@ local watchtargetframe
 local markers = {}
 local markersIcon = {}
 
+local screenw
+local screenh
+
 function DoUpdate()
   if w == nil then
     return
   end
+
+  screenw = api.Interface:GetScreenWidth() * ( 1 / api.Interface:GetUIScale())
+  screenh = api.Interface:GetScreenHeight() * ( 1 / api.Interface:GetUIScale())
 
   if w.party == nil then
     return
@@ -581,10 +591,28 @@ function DoUpdate()
     if party.markerId > 0 then
       marker = markersIcon[party.markerId]
       marker:Show(true)
-      --api.Log:Info(party.posX)
-      marker.posX = party.posX + halfwidth
-      marker.posY = party.posY - settings.iconoffset
-      marker:Position()
+      --api.Log:Info(party.posZ .. " " .. party.posX)
+      local posX = party.posX 
+      local posY = party.posY - settings.iconoffset 
+      if party.posZ > 0 then
+        marker:Show(true)
+        --replace with tangent function
+        local factor = (math.abs(posX - (screenw / 2)) / screenw) * 2
+
+        if factor > 1 then
+          --factor = factor * 0.5
+          local centeredy = posY - (screenh / 2)
+          centeredy = centeredy / factor
+          posY = centeredy + (screenh / 2)
+        end
+
+        marker.posX = math.clamp(posX + halfwidth, halfwidth, screenw - halfwidth)
+        marker.posY = math.clamp(posY, settings.iconoffset, screenh - settings.iconoffset)
+      
+        marker:Position()     
+      else
+        marker:Show(false)
+      end
     end
   end
   if settings.autotile then
