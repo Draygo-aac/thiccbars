@@ -253,7 +253,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   mpBar:Show(true)
   mpBar:Clickable(false)
   mpBar.statusBar:Clickable(false)
-    
+  mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
   w.mpBar = mpBar
 
   local pvpIcon = w:CreateChildWidget("emptywidget", "pvpIcon", 0, true)
@@ -348,7 +348,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
     self.mpBar:AddAnchor("TOPLEFT", self.hpBar, "BOTTOMLEFT", 0, -1)
     self.mpBar:AddAnchor("TOPRIGHT", self.hpBar, "BOTTOMRIGHT", 0, -1)
     self.mpBar:SetHeight(settings.mpheight)
-    self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
+    --self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
 
     if settings.mpheight > 0 then
       self.mpBar:Show(true)

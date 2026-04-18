@@ -425,12 +425,18 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       if self.target ~= "player" then
      
         local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
+
         if offsetX == nil then
           self:Show(false)
           show = false
           return
         end
-
+        if offsetX ~= offsetX then
+          offsetX = api._Thicc.screenw / 2
+        end
+        if offsetY ~= offsetY then
+          offsetY = api._Thicc.screenh / 2
+        end
 
         offsetX = math.ceil(offsetX)
         offsetY = math.ceil(offsetY) - 22

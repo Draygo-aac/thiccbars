@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.1"
+  version = "1.6.1.1"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -565,7 +565,9 @@ local markersIcon = {}
 
 local screenw
 local screenh
-
+if  api._Thicc == nil then
+  api._Thicc = {}
+end
 function DoUpdate()
   if w == nil then
     return
@@ -573,6 +575,9 @@ function DoUpdate()
 
   screenw = api.Interface:GetScreenWidth() * ( 1 / api.Interface:GetUIScale())
   screenh = api.Interface:GetScreenHeight() * ( 1 / api.Interface:GetUIScale())
+
+  api._Thicc.screenw = screenw
+  api._Thicc.screenh = screenh
 
   if w.party == nil then
     return
@@ -639,6 +644,7 @@ function DoUpdate()
   end
   -- mount in third
   w.party[51]:Lower()
+  --api.Log:Info(tostring(w.party[51]:GetExtent()))
   -- order the rest front to back. 
   for i = 1, #w.party - 2 do
     local party = w.party[i]
