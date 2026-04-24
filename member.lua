@@ -88,10 +88,15 @@ SetViewOfRaidMember = require("thiccbars//member_view")
 function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   local w = SetViewOfRaidMember(name, ownId, index, parent)
   w:Show(false)
+  
   w.memberIndex = index
   w.partyIndex = math.floor((index - 1) / 5) + 1
   w.target = name
+  w.isPet = name == "playerpet1"
+  w.bypassTeamCheck = name == "player" or name == "watchtarget" or  w.isPet
   w.settings = settings
+  w.notplayer = name ~= "player"
+
   w:SetSimpleMode(settings)
   function w:SetName(name)
     if name ~= nil then
@@ -345,17 +350,16 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.distanceLabel:SetText(str)
     local width = self.distanceLabel.style:GetTextWidth(str)
     self.distanceLabel:SetWidth(width)
-    self:Show(true)
   end
 
   function w:UpdateBackground()
     local unitid = api.Unit:GetUnitId(w.target)
     local targetid = api.Unit:GetUnitId("target")
     if unitid == targetid then
-        self.bg:SetColor(ConvertColor(255), ConvertColor(219), ConvertColor(39), 1)
+        self.bg:SetColor(ConvertColor(230), ConvertColor(197), ConvertColor(35), 1)
         return
     end
-    self.bg:SetColor(1, 1, 1, 0.8)
+    self.bg:SetColor(ConvertColor(55), ConvertColor(42), ConvertColor(17), 0.8)
   end
   local SetMarkerTexture = function(markerTexture, markerIndex)
     markerTexture:SetCoords(markerCoords[markerIndex][1], markerCoords[markerIndex][2], markerCoords[markerIndex][3], markerCoords[markerIndex][4])
@@ -387,7 +391,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self:AddAnchor("TOPLEFT", "UIParent", w.posX, w.posY)
   end
 
-  function w:Refresh(settings, settingschanged, markers, mypartyidx)
+  function w:Refresh(settings, settingschanged, markers, mypartyidx, myId)
     local show = true
     self.tileroot = nil
     self.idx = 0
@@ -409,20 +413,20 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self:Show(false)
       show = false
     end
-    if self.target == "playerpet1" then
+    if self.isPet then
       show = settings.showmount and settings.showbars
       self:Show(show)
     end
     self.targetid = api.Unit:GetUnitId(w.target)
-    local myId = api.Unit:GetUnitId("player")
+    
     if self.targetid == myId then
-      if w.target ~= "player" then
+      if w.notplayer then
         self:Show(false)
         show = false
       end
     end
-    if api.Unit:UnitIsTeamMember(self.target) == true or self.target == "player"  or self.target == "watchtarget" or self.target == "playerpet1" then
-      if self.target ~= "player" then
+    if self.bypassTeamCheck or api.Unit:UnitIsTeamMember(self.target) == true then
+      if w.notplayer then
      
         local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
 
@@ -433,6 +437,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         end
         if offsetX ~= offsetX then
           offsetX = api._Thicc.screenw / 2
+          offsetZ = -offsetZ
         end
         if offsetY ~= offsetY then
           offsetY = api._Thicc.screenh / 2
@@ -460,13 +465,12 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self.role = 0
       if (self.memberIndex > 0 and self.memberIndex <= 50) then
         self.role = api.Team:GetRole(self.memberIndex)
-      elseif (self.target == "playerpet1") then
+      elseif self.isPet then
         self.role = 4
       elseif api.Unit:UnitIsTeamMember(self.target) == true then
-        local unitid = api.Unit:GetUnitId(w.target)
-        local name = api.Unit:GetUnitNameById(unitid)
-        local idx = api.Team:GetMemberIndexByName(name)
-        self.role = api.Team:GetRole(idx)
+        show = false
+        self:Show(false)
+        return
       end
 
       self:Show(show)

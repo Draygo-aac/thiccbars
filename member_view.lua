@@ -56,7 +56,7 @@ local TEAM_ROLE_COLORS = {
 }
 
 local HP_STYLE = {
-  coords = {301, 120, 150, 20 }
+  coords = {301, 120, 150, 19 }
 }
 
 globals = require("thiccbars//common")
@@ -226,12 +226,17 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   w.markerId = 0
   w.pvpflag = false
   w.disabled = false
+  w.bypassTeamCheck = false
+  w.notplayer = true
 
   w:Show(true)
-  local bg = w:CreateNinePartDrawable(TEXTURE_PATH.RAID, "background")
-  bg:SetCoords(33, 141, 7, 7)
-  bg:SetInset(3, 3, 3, 3)
-  bg:SetColor(1, 1, 1, 0.8)
+  local bg = w:CreateNinePartDrawable(TEXTURE_PATH.HUD, "background")
+  bg:SetCoords(HP_STYLE.coords[1], HP_STYLE.coords[2], HP_STYLE.coords[3], HP_STYLE.coords[4])
+  bg:SetColor(0, 0, 0, 0.8)
+
+  local bg2 = w:CreateNinePartDrawable(TEXTURE_PATH.HUD, "background")
+  bg2:SetCoords(HP_STYLE.coords[1], HP_STYLE.coords[2], HP_STYLE.coords[3], HP_STYLE.coords[4])
+  bg2:SetColor(ConvertColor(55), ConvertColor(42), ConvertColor(17), 1)
 
   local eventWindow = w:CreateChildWidget("emptywidget", "eventWindow", 0, true)
   eventWindow:AddAnchor("TOPLEFT", w, 0, 0)
@@ -330,10 +335,17 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   w.buffWindow = buffWindow
     
   bg:RemoveAllAnchors()
-  bg:AddAnchor("TOPLEFT", hpBar, -3, -3)
-  bg:AddAnchor("BOTTOMRIGHT", mpBar, 2, 3)
+  bg:AddAnchor("TOPLEFT", hpBar, -2, -2)
+  bg:AddAnchor("BOTTOMRIGHT", mpBar, 2, 2)
   bg:Show(true)
+
+  bg2:RemoveAllAnchors()
+  bg2:AddAnchor("TOPLEFT", hpBar, 0, 0)
+  bg2:AddAnchor("BOTTOMRIGHT", mpBar, 0, 0)
+  bg2:Show(true)
+
   w.bg = bg
+  w.bg2 = bg2
   eventWindow:Raise()
 
   function w:SetSimpleMode(settings)

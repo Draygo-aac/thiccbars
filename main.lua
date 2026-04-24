@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.1.1"
+  version = "1.6.1.2"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -579,6 +579,8 @@ function DoUpdate()
   api._Thicc.screenw = screenw
   api._Thicc.screenh = screenh
 
+  local myId = api.Unit:GetUnitId("player")
+
   if w.party == nil then
     return
   end
@@ -591,7 +593,7 @@ function DoUpdate()
   local myparty = math.floor((api.Team:GetTeamPlayerIndex() - 1) / 5) + 1
   for i = 1, #w.party do
     local party = w.party[i]
-    party:Refresh(settings, settingschanged, markers, myparty)
+    party:Refresh(settings, settingschanged, markers, myparty, myId)
     local halfwidth = settings.width / 2
     if party.markerId > 0 then
       marker = markersIcon[party.markerId]
