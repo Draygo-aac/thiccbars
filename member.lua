@@ -99,14 +99,17 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
 
   w:SetSimpleMode(settings)
   function w:SetName(name)
-    if name ~= nil then
+    if name ~= nil and w.state.name ~= name then
       w.nameLabel:SetText(name)
+      w.state.name = name
     end
   end
   function w:SetGuild(name)
     if name ~= nil then
+      if w.state.gname ~= name then
         w.guildLabel:Show(true)
         w.guildLabel:SetText(name)
+      end
     else
         w.guildLabel:Show(false)
     end
@@ -114,21 +117,25 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   function w:SetMaxHp(maxHp)
     if maxHp ~= nil then
       w.hpBar.statusBar:SetMinMaxValues(0, maxHp or 0)
+      w.state.mhp = maxHp or 0
     end
   end
   function w:SetHp(hp)
     if hp ~= nil then
       w.hpBar.statusBar:SetValue(hp or 0)
+      w.state.hp = hp or 0
     end
   end
   function w:SetMaxMp(maxMp)
     if maxMp ~= nil then
       w.mpBar.statusBar:SetMinMaxValues(0, maxMp or 0)
+      w.state.mmp = maxMp or 0
     end
   end
   function w:SetMp(mp)
     if mp ~= nil then
       w.mpBar.statusBar:SetValue(mp or 0)
+      w.state.mp = mp or 0
     end
   end
   function w:UpdateName()
@@ -157,26 +164,41 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
 
   function w:UpdateMaxHp()
     local maxHp = api.Unit:UnitMaxHealth(w.target)
+    if self.state.mhp == maxHp then
+      return
+    end
     self:SetMaxHp(maxHp)
   end
   function w:UpdateHp()
     local hp = api.Unit:UnitHealth(w.target)
+    if self.state.hp == hp then
+      return
+    end
     self:SetHp(hp)
     self.dead = hp == 0
   end
   function w:UpdateMaxMp()
     local maxMp = api.Unit:UnitMaxMana(w.target)
+    if self.state.mmp == maxMp then
+      return
+    end
     self:SetMaxMp(maxMp)
   end
   function w:UpdateMp()
     local mp = api.Unit:UnitMana(w.target)
+    if self.state.mp == mp then
+      return
+    end
     self:SetMp(mp)
   end
   function w:GetRGB(carray)
     return ConvertColor(carray[1]), ConvertColor(carray[2]), ConvertColor(carray[3]), ConvertColor(carray[4])
   end
   function w:SetColor(key)
-    
+    if self.currentkey == key and self.selectedstate == self.selected then
+      return
+    end
+
     local color = self.settings.barcolors[key]
     local textcolor = self.settings.textcolors[key]
     local selectedcolor = self.settings.selectedtextcolors[key]
@@ -190,6 +212,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self.nameLabel.style:SetColor(self:GetRGB(textcolor))
       self.guildLabel.style:SetColor(self:GetRGB(textcolor))
     end
+    self.currentkey = key
+    self.selectedstate = self.selected
   end
 
 
@@ -388,16 +412,17 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   function w:Position()
 
     self:RemoveAllAnchors() -- should remove anchors before moving one
-    self:AddAnchor("TOPLEFT", "UIParent", w.posX, w.posY)
+    self:AddAnchor("TOPLEFT", "UIParent", w.wposX, w.wposY)
   end
 
   function w:Refresh(settings, settingschanged, markers, mypartyidx, myId)
     local show = true
     self.tileroot = nil
     self.idx = 0
-    self.posX = 0
-    self.posY = 0
-    self.posZ = 0
+    
+    self.wposX = 0
+    self.wposY = 0
+    self.wposZ = 0
     self.settings = settings
     
     if settingschanged then
@@ -448,10 +473,11 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
             
         offsetXHalf = math.ceil(settings.width / 2)
         offsetYHalf = math.ceil((settings.hpheight + settings.mpheight) / 2)
+        
+        self.wposX = offsetX - offsetXHalf
+        self.wposY = offsetY - offsetYHalf
+        self.wposZ = offsetZ
 
-        w.posX = offsetX - offsetXHalf
-        w.posY = offsetY - offsetYHalf
-        w.posZ = offsetZ
         if offsetZ < 0 then
           self:Show(false)
           show = false

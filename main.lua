@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.1.2"
+  version = "1.6.1.3"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -25,7 +25,6 @@ local HP_STYLE = {
 function math.clamp(num, min, max)
     return math.max(min, math.min(num, max))
 end
-
 
 local markerCoords = {
     {
@@ -599,9 +598,9 @@ function DoUpdate()
       marker = markersIcon[party.markerId]
       marker:Show(true)
       --api.Log:Info(party.posZ .. " " .. party.posX)
-      local posX = party.posX 
-      local posY = party.posY - settings.iconoffset 
-      if party.posZ > 0 then
+      local posX = party.wposX 
+      local posY = party.wposY - settings.iconoffset 
+      if party.wposZ > 0 then
         marker:Show(true)
         --replace with tangent function
         local factor = (math.abs(posX - (screenw / 2)) / screenw) * 2

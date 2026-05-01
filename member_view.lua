@@ -3,8 +3,8 @@ WATCH_DEBUFF_IFDEAD = {
 }
 
 DICTONARY_WATCH_DEBUFF_ID = { 
-  [18351] = true, -- petify but buff
-  [20349] = true, 
+--  [18351] = true, -- petify but buff
+
   [6967] = true, --jola
   [21383] = true, --filthy mucus (sealbreaker)
   [2869] = true, -- enervate
@@ -45,6 +45,7 @@ DICTIONARY_WATCH_DISABLES_ID = {
   [18352] = true, --abyssal petrify
   [3783] = true, --petrify
   [3845] = true, --petrify
+  [20349] = true
 }
 
 --Thanks Nuzi
@@ -148,6 +149,7 @@ function GetWatchedDebuffs(target, dead)
       pvpDebuff = true
     end
   end
+  
   return watchedDebuffList, pvpDebuff, disabled
 end
 
@@ -228,6 +230,15 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   w.disabled = false
   w.bypassTeamCheck = false
   w.notplayer = true
+  w.currentkey = ""
+  w.selectedstate = false
+  w.state = {}
+  w.state.mp = 0
+  w.state.hp = 0
+  w.state.mhp = 0
+  w.state.mmp = 0
+  w.state.name = ""
+  w.state.gname = ""
 
   w:Show(true)
   local bg = w:CreateNinePartDrawable(TEXTURE_PATH.HUD, "background")
