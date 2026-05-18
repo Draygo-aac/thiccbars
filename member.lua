@@ -156,7 +156,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self:SetName(name)
     if info.expeditionName ~= nil then
-        self:SetGuild(" " .. info.expeditionName)
+        self:SetGuild(info.expeditionName)
     else
         self:SetGuild(nil)
     end
@@ -175,7 +175,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       return
     end
     self:SetHp(hp)
-    self.dead = hp == 0
+    self.state.dead = hp == 0
   end
   function w:UpdateMaxMp()
     local maxMp = api.Unit:UnitMaxMana(w.target)
@@ -195,7 +195,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     return ConvertColor(carray[1]), ConvertColor(carray[2]), ConvertColor(carray[3]), ConvertColor(carray[4])
   end
   function w:SetColor(key)
-    if self.currentkey == key and self.selectedstate == self.selected then
+    if self.state.currentkey == key and self.state.selectedstate == self.selected then
       return
     end
 
@@ -212,15 +212,15 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self.nameLabel.style:SetColor(self:GetRGB(textcolor))
       self.guildLabel.style:SetColor(self:GetRGB(textcolor))
     end
-    self.currentkey = key
-    self.selectedstate = self.selected
+    self.state.currentkey = key
+    self.state.selected = self.selected
   end
 
 
   function w:UpdateBuff(dead)
     w.buffWindow:BuffUpdate(w.target, dead)
-    self.pvpDebuff = w.buffWindow.pvpDebuff
-    self.disabled = w.buffWindow.disabled
+    self.state.pvpDebuff = w.buffWindow.pvpDebuff
+    self.state.disabled = w.buffWindow.disabled
   end
 
   function w:UpdateRoleOfHpBarTexture()
@@ -236,7 +236,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         if info.social == "raid" then
 
         else
-          if self.pvpDebuff == false then
+          if self.state.pvpDebuff == false then
             self:SetColor("ally") 
             return
           else
@@ -245,7 +245,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
           end
         end
       else
-        if self.pvpDebuff == false then
+        if self.state.pvpDebuff == false then
           self:SetColor("ally")  
           return
         else
@@ -258,21 +258,21 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self:SetColor("pet")
       return
     end
-    if self.pvpDebuff then
+    if self.state.pvpDebuff then
       self:SetColor("flagged")
     else
-      if self.disabled then
+      if self.state.disabled then
         self:SetColor("disabled")
         return
       end
       if self.settings.enablerolecolors then
-        if self.role == 1 then
+        if self.state.role == 1 then
           self:SetColor("defender")
           return
-        elseif self.role == 2 then
+        elseif self.state.role == 2 then
           self:SetColor("healer")
           return
-        elseif self.role == 3 then
+        elseif self.state.role == 3 then
           self:SetColor("attacker")
           return
         end
@@ -292,13 +292,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         return
       end
       if self.settings.enablerolecolors then
-        if self.role == 1 then
+        if self.state.role == 1 then
           self:SetColor("pdefender")
           return
-        elseif self.role == 2 then
+        elseif self.state.role == 2 then
           self:SetColor("phealer")
           return
-        elseif self.role == 3 then
+        elseif self.state.role == 3 then
           self:SetColor("pattacker")
           return
         end
@@ -324,15 +324,15 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     local nameWidth = width
     if self.distanceLabel:IsVisible() then
-      width = width - self.distanceLabel:GetWidth()
+      width = width - self.distanceLabel:GetWidth() - (6 * api._Thicc.uiScale)
     end
     self.nameLabel:SetWidth(nameWidth)
     self.guildLabel:SetWidth(width)
   end
   function w:UpdateLeaderMark()
     local authority = api.Unit:UnitTeamAuthority(self.target)
-    local myId = api.Unit:GetUnitId("target")
-    local targetName = api.Unit:GetUnitNameById(unitid)
+    --local myId = api.Unit:GetUnitId("target")
+    --local targetName = api.Unit:GetUnitNameById(unitid)
 
     self.leaderMark:Show(false)
 
@@ -343,7 +343,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
 
     self:UpdateNameLabelWidth()
     if self.leaderMark:IsVisible() then
-     self.nameLabel:RemoveAllAnchors()
+      self.nameLabel:RemoveAllAnchors()
       self.nameLabel:AddAnchor("TOPLEFT", self.leaderMark, "TOPRIGHT", 2, -3)
     else
       self.nameLabel:RemoveAllAnchors()
@@ -396,13 +396,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     if self.marker == nil then
       return
     end
-    self.markerId = 0
+    self.state.markerId = 0
 
     for i = 1, 12 do
       local markerUnitId = markers[i]
       if markerUnitId == memberId then
         self.marker:SetVisible(true)
-        self.markerId = i
+        self.state.markerId = i
         SetMarkerTexture(self.marker, i)
         return
       end
@@ -412,7 +412,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   function w:Position()
 
     self:RemoveAllAnchors() -- should remove anchors before moving one
-    self:AddAnchor("TOPLEFT", "UIParent", w.wposX, w.wposY)
+    self:AddAnchor("TOPLEFT", "UIParent", w.state.posX, w.state.posY)
   end
 
   function w:Refresh(settings, settingschanged, markers, mypartyidx, myId)
@@ -420,9 +420,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.tileroot = nil
     self.idx = 0
     
-    self.wposX = 0
-    self.wposY = 0
-    self.wposZ = 0
+    self.state.posX = 0
+    self.state.posY = 0
+    self.state.posZ = 0
     self.settings = settings
     
     if settingschanged then
@@ -451,6 +451,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       end
     end
     if self.bypassTeamCheck or api.Unit:UnitIsTeamMember(self.target) == true then
+
       if w.notplayer then
      
         local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
@@ -474,9 +475,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         offsetXHalf = math.ceil(settings.width / 2)
         offsetYHalf = math.ceil((settings.hpheight + settings.mpheight) / 2)
         
-        self.wposX = offsetX - offsetXHalf
-        self.wposY = offsetY - offsetYHalf
-        self.wposZ = offsetZ
+        self.state.posX = offsetX - offsetXHalf
+        self.state.posY = offsetY - offsetYHalf
+        self.state.posZ = offsetZ
 
         if offsetZ < 0 then
           self:Show(false)
@@ -485,15 +486,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         end
       end
       self:SetMarker(self.targetid, markers)
-      if show == false then
-        return false
-      end
-      self.role = 0
+
+      self.state.role = 0
       if (self.memberIndex > 0 and self.memberIndex <= 50) then
-        self.role = api.Team:GetRole(self.memberIndex)
+        self.state.role = api.Team:GetRole(self.memberIndex)
       elseif self.isPet then
-        self.role = 4
-      elseif api.Unit:UnitIsTeamMember(self.target) == true then
+        self.state.role = 4
+      elseif api.Unit:UnitIsTeamMember(self.target) == true and self.notplayer then
         show = false
         self:Show(false)
         return
@@ -562,44 +561,8 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   event:EnableDrag(true)
   event:SetHandler("OnDragStart", event.OnDragStart)
 
-  function event:OnEvent(event, ...)
-    if event == "TEAM_MEMBERS_CHANGED" then
-      if arg[1] == "owner_changed" and (arg[4] == w.memberIndex or arg[5] == w.memberIndex) then
-        w:UpdateLeaderMark()
-      end
-    elseif event == "TEAM_MEMBER_DISCONNECTED" then
-      if arg[1] == true then
-        w:UpdateOffline()
-      end
-    elseif event == "SET_OVERHEAD_MARK" then
-      local memberId = api.Unit:GetUnitId(w.target)
-      if arg[1] ~= memberId then
-        return
-      end
-      
-      if not arg[3] then
-        w.marker:SetVisible(false)
-        w:UpdateNameLabelWidth()
-        return
-      else
-        w:SetMarker(memberId)
-      end
-      w:UpdateNameLabelWidth()
-    elseif event == "ENTERED_WORLD" then
-      local memberId = api.Unit:GetUnitId(w.target)
-      w.marker:SetVisible(false)
-      w:SetMarker(memberId)
-      w:UpdateNameLabelWidth()
-    end
-  end
-  event:SetHandler("OnEvent", event.OnEvent)
-  event:RegisterEvent("TEAM_MEMBERS_CHANGED")
-  event:RegisterEvent("TEAM_MEMBER_DISCONNECTED")
-  event:RegisterEvent("SET_OVERHEAD_MARK")
-  event:RegisterEvent("ENTERED_WORLD")
   function w:OnClose()
     local event = w.eventWindow
-    event:ReleaseHandler("OnEvent")
   end
   return w
 end

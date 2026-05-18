@@ -219,19 +219,11 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   else
       w = parent:CreateChildWidget("emptywidget", "eventWindow", 0, true)
   end
-  w:SetExtent(globals.MEMBER_WIDTH, globals.MEMBER_HEIGHT)
-    
-  w.posX = 0
-  w.posY = 0
+  w:SetExtent(globals.MEMBER_WIDTH * api._Thicc.uiScale, globals.MEMBER_HEIGHT * api._Thicc.uiScale)
   w.tileroot = nil
-  w.dead = false
-  w.markerId = 0
-  w.pvpflag = false
-  w.disabled = false
   w.bypassTeamCheck = false
   w.notplayer = true
-  w.currentkey = ""
-  w.selectedstate = false
+
   w.state = {}
   w.state.mp = 0
   w.state.hp = 0
@@ -239,6 +231,17 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   w.state.mmp = 0
   w.state.name = ""
   w.state.gname = ""
+  w.state.dead = false
+  w.state.currentkey = ""
+  w.state.posX = 0
+  w.state.posY = 0
+  w.state.posZ = 0
+  w.state.disabled = false
+  w.state.pvpflag = false
+  w.state.markerId = 0
+  w.state.currentkey = ""
+  w.state.selected = false
+  w.state.role = 0
 
   w:Show(true)
   local bg = w:CreateNinePartDrawable(TEXTURE_PATH.HUD, "background")
@@ -302,8 +305,8 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   nameLabel:Show(true)
   nameLabel:Clickable(false)
   nameLabel:SetLimitWidth(true)
-  nameLabel:SetExtent(112, FONT_SIZE.MIDDLE)
-  nameLabel.style:SetFontSize(FONT_SIZE.MIDDLE)
+  nameLabel:SetExtent(112, FONT_SIZE.MIDDLE * api._Thicc.uiScale)
+  nameLabel.style:SetFontSize(FONT_SIZE.MIDDLE * api._Thicc.uiScale)
   nameLabel.style:SetAlign(0)
   nameLabel:AddAnchor("TOPLEFT", w, 2, -10)
   w.nameLabel = nameLabel
@@ -312,11 +315,10 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   guildLabel:Show(true)
   guildLabel:Clickable(false)
   guildLabel:SetLimitWidth(true)
-  guildLabel:SetExtent(112, FONT_SIZE.SMALL)
-  guildLabel.style:SetFontSize(FONT_SIZE.SMALL)
+  guildLabel:SetExtent(112, FONT_SIZE.SMALL * api._Thicc.uiScale)
+  guildLabel.style:SetFontSize(FONT_SIZE.SMALL * api._Thicc.uiScale)
   guildLabel.style:SetAlign(0)
-  guildLabel:AddAnchor("BOTTOM", nameLabel, 0, FONT_SIZE.SMALL)
-  guildLabel:AddAnchor("LEFT", w, 2, 0)
+  guildLabel:AddAnchor("TOPLEFT", w, 5, FONT_SIZE.MIDDLE * api._Thicc.uiScale)
   guildLabel:SetText("")
   w.guildLabel = guildLabel
 
@@ -324,10 +326,10 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   distanceLabel:Show(true)
   distanceLabel:Clickable(false)
   distanceLabel:SetLimitWidth(true)
-  distanceLabel:SetExtent(25, FONT_SIZE.SMALL)
-  distanceLabel.style:SetFontSize(FONT_SIZE.SMALL)
+  distanceLabel:SetExtent(25, FONT_SIZE.SMALL * api._Thicc.uiScale)
+  distanceLabel.style:SetFontSize(FONT_SIZE.SMALL * api._Thicc.uiScale)
   distanceLabel.style:SetAlign(2)
-  distanceLabel:AddAnchor("TOPRIGHT", w, "TOPRIGHT", -3, FONT_SIZE.MIDDLE)
+  distanceLabel:AddAnchor("TOPRIGHT", w, "TOPRIGHT", -3, FONT_SIZE.MIDDLE * api._Thicc.uiScale)
   distanceLabel:SetText("00m")
   w.distanceLabel = distanceLabel
     
@@ -361,16 +363,18 @@ function SetViewOfRaidMember(name, ownId, index, parent)
 
   function w:SetSimpleMode(settings)
     self.simple = simple
+    self.state.name = ""
+    self.state.gname = ""
     local height = settings.hpheight + settings.mpheight
-    self:SetExtent(settings.width, height)
+    self:SetExtent(settings.width * api._Thicc.uiScale, height * api._Thicc.uiScale)
     self.hpBar:RemoveAllAnchors()
     self.hpBar:AddAnchor("TOPLEFT", self, 0, 0)
     self.hpBar:AddAnchor("TOPRIGHT", self, 0, 0)
-    self.hpBar:SetHeight(settings.hpheight)
+    self.hpBar:SetHeight(settings.hpheight * api._Thicc.uiScale)
     self.mpBar:RemoveAllAnchors()
     self.mpBar:AddAnchor("TOPLEFT", self.hpBar, "BOTTOMLEFT", 0, -1)
     self.mpBar:AddAnchor("TOPRIGHT", self.hpBar, "BOTTOMRIGHT", 0, -1)
-    self.mpBar:SetHeight(settings.mpheight)
+    self.mpBar:SetHeight(settings.mpheight * api._Thicc.uiScale)
     --self.mpBar:ApplyBarTexture(STATUSBAR_STYLE.MP_RAID)
 
     if settings.mpheight > 0 then
@@ -381,15 +385,26 @@ function SetViewOfRaidMember(name, ownId, index, parent)
 
     self.leaderMark:RemoveAllAnchors()
     self.leaderMark:AddAnchor("TOPLEFT", self, 2, 3)
-    self.buffWindow:SetLayout(12, settings.buffsize, 0, 2, false)
+    self.buffWindow:SetLayout(12, settings.buffsize * api._Thicc.uiScale, 0, 2, false)
     self.buffWindow:RemoveAllAnchors()
-    self.buffWindow:AddAnchor("TOPLEFT", self.hpBar, "TOPLEFT", 0, height - settings.buffsize - 1)
+    self.buffWindow:AddAnchor("TOPLEFT", self.hpBar, "TOPLEFT", 0, (height - settings.buffsize - 1) * api._Thicc.uiScale)
     self.buffWindow:SetVisibleBuffCount(8)
 
-    self.nameLabel.style:SetFontSize(settings.namesize)
-    self.nameLabel:SetExtent(112, settings.namesize)
+    self.distanceLabel:SetExtent(25 * api._Thicc.uiScale, FONT_SIZE.SMALL * api._Thicc.uiScale)
+    self.distanceLabel.style:SetFontSize(FONT_SIZE.SMALL * api._Thicc.uiScale)
+    
+    self.distanceLabel:RemoveAllAnchors()
+    self.distanceLabel:AddAnchor("TOPRIGHT", w, "TOPRIGHT", -3, settings.namesize * api._Thicc.uiScale)
 
-    self.guildLabel.style:SetFontSize(settings.guildsize)
+    self.nameLabel.style:SetFontSize(settings.namesize * api._Thicc.uiScale)
+    self.nameLabel:SetExtent(112 * api._Thicc.uiScale, settings.namesize * api._Thicc.uiScale)
+
+    self.guildLabel:RemoveAllAnchors()
+    self.guildLabel:AddAnchor("TOPLEFT", w, 5 * api._Thicc.uiScale, settings.namesize * api._Thicc.uiScale)
+    self.guildLabel:SetExtent(112 * api._Thicc.uiScale, settings.guildsize * api._Thicc.uiScale )
+    self.guildLabel.style:SetFontSize(settings.guildsize * api._Thicc.uiScale)
+
+
   end
   function w:TranslucenceFrame(percent)
     self:SetAlpha(percent)

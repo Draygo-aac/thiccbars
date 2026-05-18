@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.1.3"
+  version = "1.6.2"
 }
 local widthoff = 0
 local width = 64 - ( widthoff * 2 )
@@ -22,6 +22,7 @@ MARKERSCALER = 50
 local HP_STYLE = {
   coords = {301, 120, 150, 20 }
 }
+
 function math.clamp(num, min, max)
     return math.max(min, math.min(num, max))
 end
@@ -100,7 +101,6 @@ local markerCoords = {
     75
     }
 }
-
 --create a 50x50 grid template. 
 local gridtemplate = {
     0,0,
@@ -155,10 +155,8 @@ local gridtemplate = {
     4,9
 }
 local tiles = {}
-
 local nextcheck = false
 local settingschanged = true
-
 local w
 local settings = {}
 local event
@@ -170,7 +168,6 @@ local preview
 local SettingsFrame
 local SettingsButton
 local raidmanager
-
 
 local NameTable = {}
     NameTable.attacker = "Attacker"
@@ -201,11 +198,11 @@ end
 
 function SetDefaultBarColors()
   settings.barcolors.attacker = { 199, 74, 74, 255 }
-  settings.barcolors.defender = { 214, 176, 59, 255 }
+  settings.barcolors.defender = { 141, 162, 95, 255 }
   settings.barcolors.undecided = { 81, 126, 186, 255 }
   settings.barcolors.healer = { 201, 95, 162, 255 }
   settings.barcolors.pattacker = { 255, 95, 95, 255 }
-  settings.barcolors.pdefender = { 255, 210, 70, 255 }
+  settings.barcolors.pdefender = { 166, 191, 112, 255 }
   settings.barcolors.pundecided = { 110, 170, 255, 255 }
   settings.barcolors.phealer = { 255, 120, 205, 255 }
   settings.barcolors.enemy = { 134, 29, 29, 255 }
@@ -219,11 +216,11 @@ function SetDefaultBarColors()
 end
 function SetDefaultTextColors()
   settings.textcolors.attacker = { 255, 255, 255, 255 }
-  settings.textcolors.defender = { 0, 0, 0, 255 }
+  settings.textcolors.defender = { 255, 255, 255, 255 }
   settings.textcolors.undecided = { 255, 255, 255, 255 }
   settings.textcolors.healer = { 255, 255, 255, 255 }
   settings.textcolors.pattacker = { 255, 255, 255, 255 }
-  settings.textcolors.pdefender = { 0, 0, 0, 255 }
+  settings.textcolors.pdefender = { 255, 255, 255, 255 }
   settings.textcolors.pundecided = { 255, 255, 255, 255 }
   settings.textcolors.phealer = { 255, 255, 255, 255 }
   settings.textcolors.enemy = { 255, 255, 255, 255 }
@@ -238,11 +235,11 @@ end
 function SetDefaultTextSelectedColors()
 
   settings.selectedtextcolors.attacker = { 252, 219, 39, 255 }
-  settings.selectedtextcolors.defender = { 0, 80, 0, 255 }
+  settings.selectedtextcolors.defender = { 252, 219, 39, 255 }
   settings.selectedtextcolors.undecided = { 252, 219, 39, 255 }
   settings.selectedtextcolors.healer = { 252, 255, 39, 255 }
   settings.selectedtextcolors.pattacker = { 252, 219, 39, 255 }
-  settings.selectedtextcolors.pdefender = { 0, 80, 0, 255 }
+  settings.selectedtextcolors.pdefender = { 252, 219, 39, 255 }
   settings.selectedtextcolors.pundecided = { 252, 219, 39, 255 }
   settings.selectedtextcolors.phealer = { 252, 219, 39, 255 }
   settings.selectedtextcolors.enemy = { 252, 219, 39, 255 }
@@ -280,7 +277,6 @@ local GLOBALPARTYROLEKEYS = {
 "pdefender"
 }
 
-
 function CheckSettings()
   if settings == nil then
     settings = {}
@@ -311,9 +307,6 @@ function CheckSettings()
   end
   if settings.buffsize == nil then
     settings.buffsize = globals.BUFF_ICONSIZE 
-  end
-  if settings.autotile == nil then
-    settings.autotile = false
   end
   if settings.iconoffset == nil then
     settings.iconoffset = 36
@@ -359,200 +352,6 @@ end
 
 local raid = {}
 
-
-local function TestOverlap(a, b)
-  local x1 = a.posX
-  local y1 = a.posY
-  local w = settings.width
-  local h = settings.hpheight + settings.mpheight 
-  local x2 = b.posX
-  local y2 = b.posY
-
-  return x1 < x2 + w and
-    x2 < x1 + w and
-    y1 < y2 + h and
-    y2 < y1 + h
-end
-
-local WritePosition
-local MoveParent
-local Merge
-local CheckOnMove
-
-local function ClearTiles()
-  for i = 1, #tiles do
-    table.remove(tiles)
-  end
-end
-
-local function CreateTile(parent)
-  local tile = {}
-  tile.parent = parent
-  tile.members = {}
-  table.insert(tile.members, parent)
-  table.insert(tiles, tile)
-  tile.idx = #tiles
-  tile.deleted = false
-  parent.tileroot = tile
-  return tile
-end
-
-local function WritePosition(tile, member, index)
-  local gtx = (index * 2) - 1
-  local frameposx = gridtemplate[gtx]
-  local frameposy = gridtemplate[gtx + 1]
-
-  local posX = tile.parent.posX
-  local posY = tile.parent.posY
-  local offsetX = frameposx * (settings.width + 1)
-  local offsetY = frameposy * (settings.hpheight + settings.mpheight + 1)
-  member.posX = posX + offsetX
-  member.posY = posY + offsetY
-  CheckOnMove(member, index)
-end
-
-function AddTileMember(tile, frame)
-  table.insert(tile.members, frame)
-  frame.tileroot = tile
-  frame.idx = #tile.members
-end
-
-CheckOnMove = function(member, index)
-  for i = 1, index - 1 do
-    local test = raid[i]
-    if test.tileroot ~= member.tileroot then
-      if TestOverlap(member, test) then
-        if member.tileroot ~= nil then
-          if test.tileroot ~= nil then
-            Merge(test.tileroot, member.tileroot)
-          else
-            AddToTile(member.tileroot, test)
-          end
-
-        elseif test.tileroot ~= nil then
-          AddToTile(test.tileroot, member)
-        else
-          tileroot = CreateTile(tile)
-          AddToTile(tileroot, frame)                     
-        end
-      end
-    end
-  end
-end
-
-local function MoveParent(newparent, oldparent)
-  local tile = oldparent.tileroot
-  if tile == nil then
-    return
-  end
-  oldparent.posX = newparent.posX
-  oldparent.posY = newparent.posY
-  for i = 1, #tile.members do
-    local member = tile.members[i]
-    WritePosition(tile, member, i)
-  end
-end
-
-AddToTile = function(tile, frame)
-  AddTileMember(tile, frame)
-  local parent = tile.parent
-  WritePosition(tile, frame, frame.idx)
-end
-
-Merge = function(to, from)
-  if to.idx == from.idx then
-      return
-  end
-
-  if from.deleted then
-      return
-  end
-  from.deleted = true
-  local totalmember = #from.members
-  
-  for i = 1, #from.members  do 
-    local member = from.members[i]
-    table.insert(to.members, member)
-  end
-
-  local basex = to.members[1].posX
-  local basey = to.members[1].posY
-  local total = basex + basey
-  for i = 1, #to.members do
-    local member = to.members[i]
-    member.idx = i
-    member.tileroot = to
-    local comp = member.posX + member.posY
-        
-    if comp < total then
-      basex = member.posX
-      basey = member.posY
-      total = basex + basey
-    end
-  end
-  to.members[1].posX = basex
-  to.members[1].posY = basey
-  for i = 1, #to.members do
-    WritePosition(to, to.members[i], i)
-  end
-end
-
-local function GetOverlappingTile(frame, index)
-  for i = 1, #raid do
-    if i ~= index then
-      local test = w.party[i]
-      if frame ~= test then
-        if TestOverlap(frame, test) then
-          return true, test
-        end
-      end
-    end
-  end
-  return false, nil
-end
-
-local function SortFunction(a, b)
-  return a.posX + a.posY < b.posX + b.posY
-end
-
-local function CreateRaidArray()
-  local numberinraid = #raid
-  for i= 1, numberinraid do
-    table.remove(raid)
-  end
-  for i = 1, #w.party do
-    local member = w.party[i]
-    if member:IsVisible() then
-      table.insert(raid, member)
-    end
-  end
-  table.sort(raid, SortFunction)
-end
-
-local function DoTiling()
-  ClearTiles()
-  CreateRaidArray()
-  -- api.Log:Info(#raid)
-  for i = 1, #raid do
-    local frame = raid[i]
-    local overlapping, overlapframe = GetOverlappingTile(frame, i)
-    if overlapping then
-      if overlapframe.tileroot ~= nil then
-        if frame.tileroot == nil then
-          AddToTile(overlapframe.tileroot, frame)
-        else
-          Merge(overlapframe.tileroot, frame.tileroot)
-        end
-      elseif frame.tileroot ~= nil then
-        AddToTile(frame.tileroot, overlapframe)
-      else
-        local tileroot = CreateTile(overlapframe)
-        AddToTile(tileroot, frame)
-      end
-    end
-  end
-end
-
 local targetoftargetframe
 local targetunitframe
 local ondragold
@@ -564,6 +363,7 @@ local markersIcon = {}
 
 local screenw
 local screenh
+local uiScale
 if  api._Thicc == nil then
   api._Thicc = {}
 end
@@ -574,6 +374,12 @@ function DoUpdate()
 
   screenw = api.Interface:GetScreenWidth() * ( 1 / api.Interface:GetUIScale())
   screenh = api.Interface:GetScreenHeight() * ( 1 / api.Interface:GetUIScale())
+  uiScale = api.Interface:GetUIScale()
+
+  if api._Thicc.uiScale ~= uiScale then
+    settingschanged = true
+    api._Thicc.uiScale = uiScale
+  end
 
   api._Thicc.screenw = screenw
   api._Thicc.screenh = screenh
@@ -594,13 +400,13 @@ function DoUpdate()
     local party = w.party[i]
     party:Refresh(settings, settingschanged, markers, myparty, myId)
     local halfwidth = settings.width / 2
-    if party.markerId > 0 then
-      marker = markersIcon[party.markerId]
+    if party.state.markerId > 0 then
+      marker = markersIcon[party.state.markerId]
       marker:Show(true)
       --api.Log:Info(party.posZ .. " " .. party.posX)
-      local posX = party.wposX 
-      local posY = party.wposY - settings.iconoffset 
-      if party.wposZ > 0 then
+      local posX = party.state.posX 
+      local posY = party.state.posY - settings.iconoffset 
+      if party.state.posZ > 0 then
         marker:Show(true)
         --replace with tangent function
         local factor = (math.abs(posX - (screenw / 2)) / screenw) * 2
@@ -621,9 +427,6 @@ function DoUpdate()
       end
     end
   end
-  if settings.autotile then
-    DoTiling()
-  end
   local targetid = api.Unit:GetUnitId("target")
   for i = 1, #w.party do
     local party = w.party[i]
@@ -635,7 +438,6 @@ function DoUpdate()
   end
     
   if SettingsFrame:IsVisible() then
-        
     SettingsFrame:Refresh(settings, settingschanged, markers)
   end
   settingschanged = false
@@ -694,7 +496,6 @@ local function ChangeTarget(arg)
 end
 
 local LIST_ROWPADDING = 16
-
 local LIST_COLUMN_HEIGHT = 35
 local ROWDATA_COLUMN_OFFSET = 1
 
@@ -783,17 +584,15 @@ local function DrawListCtrlColumnSperatorLine(widget, totalCount, count, colorWh
 end
 
 local function GetColumnRow(index)
-    
-    index = index - 1
-    local column = math.floor(index / 5) + 1
-    local row = math.fmod(index, 5) + 1
-    if column > 5 then
-        column = column - 5
-        row = row + 6
-    end
-    return column, row
+  index = index - 1
+  local column = math.floor(index / 5) + 1
+  local row = math.fmod(index, 5) + 1
+  if column > 5 then
+    column = column - 5
+    row = row + 6
+  end
+  return column, row
 end
-
 
 local function CreateViewOfSettingsFrame()
   local w = api.Interface:CreateWindow("ThiccSettingsWnd", "ThiccBar Settings", 600, 700)
@@ -826,7 +625,7 @@ local function CreateViewOfSettingsFrame()
 
   preview:RemoveAllAnchors() -- should remove anchors before moving one
   preview:AddAnchor("TOPLEFT", w, 350, 30)
-  preview.buffWindow:SetLayout(12, settings.buffsize, 0, 2, false)
+  preview.buffWindow:SetLayout(12, settings.buffsize * api._Thicc.uiScale, 0, 2, false)
   w.preview = preview
 
   local colorssettingswindow = api.Interface:CreateWindow("ThiccColorSettingsWnd", "ThiccBar Colors", 600, 700)
@@ -1193,8 +992,6 @@ local function CreateViewOfSettingsFrame()
     colorButton:SetHandler("OnClick", colorButton.OnClick)
   end
 
-
-
   local SetPreviewLayoutFunc = function(applicantList, rowIndex, colIndex, subItem)
     local hpPreview = subItem:CreateChildWidget("emptywidget", subItem:GetId() .. ".hpBarw", 0, true)
     hpPreview:SetExtent(65, 20)
@@ -1228,7 +1025,6 @@ local function CreateViewOfSettingsFrame()
     hpPreview.nameLabel = nameLabel
     subItem.textlabel = barLabel
   end
-  
 
   local SetSelectedPreviewLayoutFunc = function(applicantList, rowIndex, colIndex, subItem)
     
@@ -1348,7 +1144,7 @@ local function CreateViewOfSettingsFrame()
 
   local colorsButton = w:CreateChildWidget("button", "colorsButton", 0, false)
   colorsButton:SetText("Colors")
-  colorsButton:AddAnchor("BOTTOMLEFT", previewLabel, -140, 110)
+  colorsButton:AddAnchor("BOTTOMLEFT", previewLabel, -140, 90)
   ApplyButtonSkin(colorsButton, BUTTON_BASIC.DEFAULT)
 
   w.colorsButton = colorsButton
@@ -1398,23 +1194,23 @@ local function CreateViewOfSettingsFrame()
   w.showMountCheckButton:SetButtonStyle("default")
   w.showMountCheckButton:Show(true)
 
-  local tilingLabel = w:CreateChildWidget("label", "tilingLabel", 0, true)
-  tilingLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
-  tilingLabel:SetText("Auto-Tiling (Beta, not recommended):")
-  tilingLabel:SetHeight(FONT_SIZE.LARGE)
-  tilingLabel.style:SetFontSize(FONT_SIZE.LARGE)
-  tilingLabel.style:SetAlign(3)
-  ApplyTextColor(tilingLabel, FONT_COLOR.DEFAULT)
-
-  w.tilingLabel = tilingLabel
-
-  w.tilingCheckButton = checkButton.CreateCheckButton("tilingCheckButton", w, nil)
-  w.tilingCheckButton:AddAnchor("RIGHT", tilingLabel, 275, 0)
-  w.tilingCheckButton:SetButtonStyle("default")
-  w.tilingCheckButton:Show(true)
+  --local tilingLabel = w:CreateChildWidget("label", "tilingLabel", 0, true)
+  --tilingLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
+  --tilingLabel:SetText("Auto-Tiling (Beta, not recommended):")
+  --tilingLabel:SetHeight(FONT_SIZE.LARGE)
+  --tilingLabel.style:SetFontSize(FONT_SIZE.LARGE)
+  --tilingLabel.style:SetAlign(3)
+  --ApplyTextColor(tilingLabel, FONT_COLOR.DEFAULT)
+  --
+  --w.tilingLabel = tilingLabel
+  --
+  --w.tilingCheckButton = checkButton.CreateCheckButton("tilingCheckButton", w, nil)
+  --w.tilingCheckButton:AddAnchor("RIGHT", tilingLabel, 275, 0)
+  --w.tilingCheckButton:SetButtonStyle("default")
+  --w.tilingCheckButton:Show(true)
 
   local keyLabel = w:CreateChildWidget("label", "keyLabel", 0, true)
-  keyLabel:AddAnchor("BOTTOMLEFT", tilingLabel, 15, FONT_SIZE.LARGE + ROWPADDING)
+  keyLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 15, FONT_SIZE.LARGE + ROWPADDING)
   keyLabel:SetText("While below key is held, mouse clicks will pass through thicc bars. ")
   keyLabel:SetHeight(FONT_SIZE.MIDDLE)
   keyLabel.style:SetFontSize(FONT_SIZE.MIDDLE)
@@ -1830,11 +1626,11 @@ local function CreateViewOfSettingsFrame()
     SaveSettings()
   end
 
-  function w:tilingOnCheckChanged()
-    local checked = w.tilingCheckButton:GetChecked()
-    settings.autotile = checked
-    SaveSettings()
-  end
+  --function w:tilingOnCheckChanged()
+  --  local checked = w.tilingCheckButton:GetChecked()
+  --  settings.autotile = checked
+  --  SaveSettings()
+  --end
 
   function colorssettingswindow.EnableRoleColorsCheckButtonChanged()
     local checked = colorssettingswindow.EnableRoleColorsCheckButton:GetChecked()
@@ -1963,8 +1759,8 @@ local function CreateViewOfSettingsFrame()
   w.showMountCheckButton:SetChecked(settings.showmount)
   w.shiftCheckButton:SetChecked(settings.shiftenabled)
   w.controlCheckButton:SetChecked(settings.ctrlenabled)
-  -- w.dragCheckButton:SetChecked(settings.dragoption)
-  w.tilingCheckButton:SetChecked(settings.autotile)
+  --w.dragCheckButton:SetChecked(settings.dragoption)
+  --w.tilingCheckButton:SetChecked(settings.autotile)
 
   colorssettingswindow.EnableRoleColorsCheckButton:SetChecked(settings.enablerolecolors)
   colorssettingswindow.EnablePartyColorsButton:SetChecked(settings.enablepartycolors)
@@ -1974,8 +1770,8 @@ local function CreateViewOfSettingsFrame()
   w.showMountCheckButton:SetHandler("OnCheckChanged", w.ShowMountOnCheckChanged)
   w.shiftCheckButton:SetHandler("OnCheckChanged", w.ShiftOnCheckChanged)
   w.controlCheckButton:SetHandler("OnCheckChanged", w.ControlOnCheckChanged)
-  -- w.dragCheckButton:SetHandler("OnCheckChanged", w.DragOnCheckChanged)
-  w.tilingCheckButton:SetHandler("OnCheckChanged", w.tilingOnCheckChanged)
+  --w.dragCheckButton:SetHandler("OnCheckChanged", w.DragOnCheckChanged)
+  --w.tilingCheckButton:SetHandler("OnCheckChanged", w.tilingOnCheckChanged)
   colorssettingswindow.EnableRoleColorsCheckButton:SetHandler("OnCheckChanged", colorssettingswindow.EnableRoleColorsCheckButtonChanged)
   colorssettingswindow.EnablePartyColorsButton:SetHandler("OnCheckChanged", colorssettingswindow.EnablePartyColorsButtonChanged)
 
@@ -1988,6 +1784,7 @@ local function CreateViewOfSettingsFrame()
 end
 
 local function ShowSettings()
+  SettingsFrame.preview:SetSimpleMode(settings)
   SettingsFrame:Show(true)
 end
 local function OnEvent(window, evt, arg1)
@@ -2008,29 +1805,34 @@ local function Load()
   SetViewOfRaidMember = membermethods.SetViewOfRaidMember
   settings = LoadSettings()
 
+  uiScale = api.Interface:GetUIScale()
+  api.Log:Info(tostring(uiScale))
+  api._Thicc.uiScale = uiScale
+
+
   CheckSettings()
   local multiple = settings.overheadiconsize / MARKERSCALER
   for i = 1, 12 do
-      table.insert(markers, "0x00")
-      local wIcon = api.Interface:CreateEmptyWindow("overheadMarker" .. i, "UIParent")
-      marker = wIcon:CreateImageDrawable(TEXTURE_PATH.OVERHEAD_MARK, "overlay")
-      marker:SetVisible(true)
-      marker:SetExtent(64 * multiple, 75 * multiple)
-      SetMarkerTexture(marker, i)
-      marker:AddAnchor("CENTER", wIcon, 0, 0)
-      wIcon.marker = marker
-      wIcon.posX = 0
-      wIcon.posY = 0
-      wIcon:SetAlpha(settings.markertransparency / 100)
-      function wIcon:Position()
-
-          self:RemoveAllAnchors() -- should remove anchors before moving one
-          self:AddAnchor("TOPLEFT", "UIParent", wIcon.posX, wIcon.posY)
-      end
-      table.insert(markersIcon, wIcon)
+    table.insert(markers, "0x00")
+    local wIcon = api.Interface:CreateEmptyWindow("overheadMarker" .. i, "UIParent")
+    marker = wIcon:CreateImageDrawable(TEXTURE_PATH.OVERHEAD_MARK, "overlay")
+    marker:SetVisible(true)
+    marker:SetExtent(64 * multiple, 75 * multiple)
+    SetMarkerTexture(marker, i)
+    marker:AddAnchor("CENTER", wIcon, 0, 0)
+    wIcon.marker = marker
+    wIcon.posX = 0
+    wIcon.posY = 0
+    wIcon:SetAlpha(settings.markertransparency / 100)
+    function wIcon:Position()
+      self:RemoveAllAnchors() -- should remove anchors before moving one
+      self:AddAnchor("TOPLEFT", "UIParent", wIcon.posX, wIcon.posY)
+    end
+    table.insert(markersIcon, wIcon)
   end
   SettingsFrame = CreateViewOfSettingsFrame()
   SettingsFrame:Show(false)
+  SettingsFrame.preview:SetSimpleMode(settings)
 
   raidmanager = ADDON:GetContent(UIC.RAID_MANAGER )
 
@@ -2063,7 +1865,7 @@ local function Load()
   w.rowCount = 0
   w.columnCount = 0
 
-  w:SetHandler("OnEvent", OnEvent)
+  --w:SetHandler("OnEvent", OnEvent)
   --w:SetHandler("OnUpdate", OnTickUpdate)
   --w:RegisterEvent("MOUSE_DOWN")
 
@@ -2092,7 +1894,7 @@ local function Unload()
       --eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
   end
   if w ~= nil then
-    w:ReleaseHandler("OnEvent")
+    --w:ReleaseHandler("OnEvent")
 
     for i = 1, #w.party do
       w.party[i]:OnClose()
