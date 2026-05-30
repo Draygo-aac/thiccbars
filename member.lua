@@ -311,18 +311,15 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
 
   function w:UpdateNameLabelWidth()
     local width = self.hpBar:GetWidth()
-
+     local nameWidth = width
     if self.marker:IsVisible() then
-      width = width - self.marker:GetWidth()
-      if self.leaderMark:IsVisible() then
-        width = width - self.leaderMark:GetWidth()
-      end
-    else
-      if self.leaderMark:IsVisible() then
-          width = width - self.leaderMark:GetWidth()
-      end
+      nameWidth = nameWidth - self.marker:GetWidth()
     end
-    local nameWidth = width
+
+    if self.leaderMark:IsVisible() then
+        nameWidth = nameWidth - self.leaderMark:GetWidth()
+    end
+
     if self.distanceLabel:IsVisible() then
       width = width - self.distanceLabel:GetWidth() - (6 * api._Thicc.uiScale)
     end
@@ -415,18 +412,15 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self:AddAnchor("TOPLEFT", "UIParent", w.state.posX, w.state.posY)
   end
 
-  function w:Refresh(settings, settingschanged, markers, mypartyidx, myId)
+  function w:Refresh(settings, settingschanged, markers, mypartyidx, myId, refreshrender)
     local show = true
-    self.tileroot = nil
-    self.idx = 0
     
     self.state.posX = 0
     self.state.posY = 0
     self.state.posZ = 0
     self.settings = settings
     
-    if settingschanged then
-
+    if settingschanged or refreshrender then
       self:TranslucenceFrame(settings.bartransparency / 100)
       self:SetSimpleMode(settings)
     end

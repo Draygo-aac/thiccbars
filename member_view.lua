@@ -220,7 +220,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
       w = parent:CreateChildWidget("emptywidget", "eventWindow", 0, true)
   end
   w:SetExtent(globals.MEMBER_WIDTH * api._Thicc.uiScale, globals.MEMBER_HEIGHT * api._Thicc.uiScale)
-  w.tileroot = nil
+
   w.bypassTeamCheck = false
   w.notplayer = true
 
@@ -362,7 +362,7 @@ function SetViewOfRaidMember(name, ownId, index, parent)
   eventWindow:Raise()
 
   function w:SetSimpleMode(settings)
-    self.simple = simple
+    --self.simple = simple
     self.state.name = ""
     self.state.gname = ""
     local height = settings.hpheight + settings.mpheight

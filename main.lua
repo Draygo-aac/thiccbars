@@ -13,10 +13,10 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.2"
+  version = "1.6.2.1"
 }
 local widthoff = 0
-local width = 64 - ( widthoff * 2 )
+local width = 64 
 MARKERSCALER = 50
 
 local HP_STYLE = {
@@ -29,131 +29,79 @@ end
 
 local markerCoords = {
     {
-    0 + widthoff,
+    0 ,
     0,
     width,
     75
     },
     {
-    64  + widthoff,
+    64,
     0,
     width,
     77
     },
     {
-    128 + widthoff,
+    128,
     0,
     width,
     75
     },
     {
-    192 + widthoff,
+    192,
     0,
     width,
     75
     },
     {
-    0 + widthoff,
+    0,
     75,
     width,
     75
     },
     {
-    64 + widthoff,
+    64,
     75,
     width,
     75
     },
     {
-    128 + widthoff,
+    128,
     75,
     width,
     75
     },
     {
-    192 + widthoff,
+    192,
     75,
     width,
     75
     },
     {
-    0 + widthoff,
+    0,
     150,
     width,
     75
     },
     {
-    64 + widthoff,
+    64,
     150,
     width,
     75
     },
     {
-    128 + widthoff,
+    128,
     150,
     width,
     75
     },
     {
-    192 + widthoff,
+    192,
     150,
     width,
     75
     }
 }
---create a 50x50 grid template. 
-local gridtemplate = {
-    0,0,
-    0,1,
-    1,0,
-    1,1,
-    0,2,
-    1,2,
-    0,3,
-    1,3,
-    0,4,
-    1,4,
-    2,0,
-    2,1,
-    2,2,
-    2,3,
-    2,4,
-    0,5,
-    1,5,
-    2,5,
-    0,6,
-    1,6,
-    2,6,
-    3,0,
-    3,1,
-    3,2,
-    3,3,
-    3,4,
-    3,5,
-    3,6,
-    0,7,
-    1,7,
-    2,7,
-    3,7,
-    0,8,
-    1,8,
-    2,8,
-    3,8,
-    4,0,
-    4,1,
-    4,2,
-    4,3,
-    4,4,
-    4,5,
-    4,6,
-    4,7,
-    4,8,
-    0,9,
-    1,9,
-    2,9,
-    3,9,
-    4,9
-}
+
 local tiles = {}
 local nextcheck = false
 local settingschanged = true
@@ -233,7 +181,6 @@ function SetDefaultTextColors()
   settings.textcolors.pet = {255, 255, 255, 255}
 end
 function SetDefaultTextSelectedColors()
-
   settings.selectedtextcolors.attacker = { 252, 219, 39, 255 }
   settings.selectedtextcolors.defender = { 252, 219, 39, 255 }
   settings.selectedtextcolors.undecided = { 252, 219, 39, 255 }
@@ -349,7 +296,6 @@ function CheckSettings()
   end
 end
 
-
 local raid = {}
 
 local targetoftargetframe
@@ -367,9 +313,21 @@ local uiScale
 if  api._Thicc == nil then
   api._Thicc = {}
 end
+local updatestep = 0
+local maxupdatestep = 0
 function DoUpdate()
   if w == nil then
     return
+  end
+  updatestep = updatestep + 1
+
+  if updatestep > maxupdatestep then
+    updatestep = 0
+  end
+  local updateitem = -1
+  if math.fmod(updatestep, 10) == 0 then
+    updateitem = updatestep / 10
+    
   end
 
   screenw = api.Interface:GetScreenWidth() * ( 1 / api.Interface:GetUIScale())
@@ -396,28 +354,27 @@ function DoUpdate()
     markersIcon[i]:Lower()
   end
   local myparty = math.floor((api.Team:GetTeamPlayerIndex() - 1) / 5) + 1
-  for i = 1, #w.party do
-    local party = w.party[i]
-    party:Refresh(settings, settingschanged, markers, myparty, myId)
-    local halfwidth = settings.width / 2
-    if party.state.markerId > 0 then
-      marker = markersIcon[party.state.markerId]
-      marker:Show(true)
-      --api.Log:Info(party.posZ .. " " .. party.posX)
-      local posX = party.state.posX 
-      local posY = party.state.posY - settings.iconoffset 
-      if party.state.posZ > 0 then
-        marker:Show(true)
-        --replace with tangent function
-        local factor = (math.abs(posX - (screenw / 2)) / screenw) * 2
+  local halfwidth = settings.width / 2
 
+  for i = 1, #w.party do
+    local lparty = w.party[i]
+    lparty:Refresh(settings, settingschanged, markers, myparty, myId, updateitem == i)
+
+    if lparty.state.markerId > 0 then
+      marker = markersIcon[lparty.state.markerId]
+      marker:Show(true)
+
+      local posX = lparty.state.posX 
+      local posY = lparty.state.posY - settings.iconoffset 
+      if lparty.state.posZ > 0 then
+
+        local factor = (math.abs(posX - (screenw / 2)) / screenw) * 2
         if factor > 1 then
           --factor = factor * 0.5
           local centeredy = posY - (screenh / 2)
           centeredy = centeredy / factor
           posY = centeredy + (screenh / 2)
         end
-
         marker.posX = math.clamp(posX + halfwidth, halfwidth, screenw - halfwidth)
         marker.posY = math.clamp(posY, settings.iconoffset, screenh - settings.iconoffset)
       
@@ -447,7 +404,6 @@ function DoUpdate()
   end
   -- mount in third
   w.party[51]:Lower()
-  --api.Log:Info(tostring(w.party[51]:GetExtent()))
   -- order the rest front to back. 
   for i = 1, #w.party - 2 do
     local party = w.party[i]
@@ -518,7 +474,6 @@ local function GetButtonDefaultFontColor()
     color.disabled = {ConvertColor(92), ConvertColor(92), ConvertColor(92), 1}
     return color
 end
-
 
 local function SettingListColumn(listCtrl, column)
   listCtrl:SetColumnHeight(LIST_COLUMN_HEIGHT)
@@ -700,7 +655,6 @@ local function CreateViewOfSettingsFrame()
   colorpickerWnd:SetCloseOnEscape(true)
   w.colorpickerWnd = colorpickerWnd
   
-
   colorpickerWnd.closeButton = colorpickerWnd:CreateChildWidget("button", "colorpickerWnd.closeButton", 0, false)
   colorpickerWnd.closeButton:SetText("Save")
   colorpickerWnd.closeButton:AddAnchor("BOTTOM", colorpickerWnd, 0, -10)
@@ -723,8 +677,6 @@ local function CreateViewOfSettingsFrame()
   colorpickerBar.statusBar:SetValue(1)
   colorpickerBar.statusBar:Show(true)
   colorpickerPreviewPreview:Show(true)
-
-  
 
   colorpickerWnd.previeww = colorpickerPreviewPreview
   colorpickerWnd.bar = colorpickerBar
@@ -854,10 +806,6 @@ local function CreateViewOfSettingsFrame()
   colorpickerWnd.AlphaScroll.alphaScrollSettingLabel = alphaScrollSettingLabel
   colorpickerWnd.AlphaScroll.alphaScrollSettingLabel:SetText(tostring(zero))
 
-  --barcolors
-  --textcolors
-  --selectedtextcolors
-
   colorpickerWnd.type = "barcolors"
   colorpickerWnd.item = "undecided"
 
@@ -913,7 +861,6 @@ local function CreateViewOfSettingsFrame()
     self.type = type
     self.item = item
   end
-  --colorpickerWnd:Open("barcolors", "undecided")
 
   colorpickerWnd.RedScroll:SetHandler("OnSliderChanged", colorpickerWnd.RedScroll.OnSliderChanged)
   colorpickerWnd.GreenScroll:SetHandler("OnSliderChanged", colorpickerWnd.GreenScroll.OnSliderChanged)
@@ -953,7 +900,6 @@ local function CreateViewOfSettingsFrame()
     subItem.options.item = info
   end
 
-
   local TextColorLayoutFunc = function(applicantList, rowIndex, colIndex, subItem)
     
     local colorButton = colorssettingswindow:CreateChildWidget("button", subItem:GetId() .. ".colorButton", 0, true)
@@ -971,8 +917,6 @@ local function CreateViewOfSettingsFrame()
 
     colorButton:SetHandler("OnClick", colorButton.OnClick)
   end
-
-
 
   local SelectedTextColorLayoutFunc = function(applicantList, rowIndex, colIndex, subItem)
     
@@ -1069,7 +1013,6 @@ local function CreateViewOfSettingsFrame()
     end
     subItem:SetText("Test")
     SetColor(subItem.hpBar, info, subItem.textlabel, false)
-
   end
 
   local SetSelectedPreviewFunc = function(subItem, info, setValue)
@@ -1081,7 +1024,6 @@ local function CreateViewOfSettingsFrame()
     end
     subItem:SetText("Test")
     SetColor(subItem.shpBar, info, subItem.selectedtextlabel, true)
-
   end
 
   local colorlist = W_CTRL.CreatePageScrollListCtrl("colorList", colorssettingswindow )
@@ -1193,21 +1135,6 @@ local function CreateViewOfSettingsFrame()
   w.showMountCheckButton:AddAnchor("RIGHT", showMountLabel, 68, 0)
   w.showMountCheckButton:SetButtonStyle("default")
   w.showMountCheckButton:Show(true)
-
-  --local tilingLabel = w:CreateChildWidget("label", "tilingLabel", 0, true)
-  --tilingLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 0, FONT_SIZE.LARGE + ROWPADDING)
-  --tilingLabel:SetText("Auto-Tiling (Beta, not recommended):")
-  --tilingLabel:SetHeight(FONT_SIZE.LARGE)
-  --tilingLabel.style:SetFontSize(FONT_SIZE.LARGE)
-  --tilingLabel.style:SetAlign(3)
-  --ApplyTextColor(tilingLabel, FONT_COLOR.DEFAULT)
-  --
-  --w.tilingLabel = tilingLabel
-  --
-  --w.tilingCheckButton = checkButton.CreateCheckButton("tilingCheckButton", w, nil)
-  --w.tilingCheckButton:AddAnchor("RIGHT", tilingLabel, 275, 0)
-  --w.tilingCheckButton:SetButtonStyle("default")
-  --w.tilingCheckButton:Show(true)
 
   local keyLabel = w:CreateChildWidget("label", "keyLabel", 0, true)
   keyLabel:AddAnchor("BOTTOMLEFT", showThiccLabel, 15, FONT_SIZE.LARGE + ROWPADDING)
@@ -1626,12 +1553,6 @@ local function CreateViewOfSettingsFrame()
     SaveSettings()
   end
 
-  --function w:tilingOnCheckChanged()
-  --  local checked = w.tilingCheckButton:GetChecked()
-  --  settings.autotile = checked
-  --  SaveSettings()
-  --end
-
   function colorssettingswindow.EnableRoleColorsCheckButtonChanged()
     local checked = colorssettingswindow.EnableRoleColorsCheckButton:GetChecked()
     settings.enablerolecolors = checked
@@ -1759,8 +1680,6 @@ local function CreateViewOfSettingsFrame()
   w.showMountCheckButton:SetChecked(settings.showmount)
   w.shiftCheckButton:SetChecked(settings.shiftenabled)
   w.controlCheckButton:SetChecked(settings.ctrlenabled)
-  --w.dragCheckButton:SetChecked(settings.dragoption)
-  --w.tilingCheckButton:SetChecked(settings.autotile)
 
   colorssettingswindow.EnableRoleColorsCheckButton:SetChecked(settings.enablerolecolors)
   colorssettingswindow.EnablePartyColorsButton:SetChecked(settings.enablepartycolors)
@@ -1770,8 +1689,6 @@ local function CreateViewOfSettingsFrame()
   w.showMountCheckButton:SetHandler("OnCheckChanged", w.ShowMountOnCheckChanged)
   w.shiftCheckButton:SetHandler("OnCheckChanged", w.ShiftOnCheckChanged)
   w.controlCheckButton:SetHandler("OnCheckChanged", w.ControlOnCheckChanged)
-  --w.dragCheckButton:SetHandler("OnCheckChanged", w.DragOnCheckChanged)
-  --w.tilingCheckButton:SetHandler("OnCheckChanged", w.tilingOnCheckChanged)
   colorssettingswindow.EnableRoleColorsCheckButton:SetHandler("OnCheckChanged", colorssettingswindow.EnableRoleColorsCheckButtonChanged)
   colorssettingswindow.EnablePartyColorsButton:SetHandler("OnCheckChanged", colorssettingswindow.EnablePartyColorsButtonChanged)
 
@@ -1788,10 +1705,7 @@ local function ShowSettings()
   SettingsFrame:Show(true)
 end
 local function OnEvent(window, evt, arg1)
-   -- if arg1 ~= nil then
-        --api.File:Write("args.txt", arg1)
-   --     api.Log:Info(tostring(arg1))
-   -- end
+
 end
 
 local SetMarkerTexture = function(markerTexture, markerIndex)
@@ -1808,7 +1722,6 @@ local function Load()
   uiScale = api.Interface:GetUIScale()
   api.Log:Info(tostring(uiScale))
   api._Thicc.uiScale = uiScale
-
 
   CheckSettings()
   local multiple = settings.overheadiconsize / MARKERSCALER
@@ -1865,10 +1778,6 @@ local function Load()
   w.rowCount = 0
   w.columnCount = 0
 
-  --w:SetHandler("OnEvent", OnEvent)
-  --w:SetHandler("OnUpdate", OnTickUpdate)
-  --w:RegisterEvent("MOUSE_DOWN")
-
   --create raid member tags   
   local party = {}
   for i = 1, 50 do
@@ -1881,6 +1790,7 @@ local function Load()
     party[52] = CreateRaidMember(nil, "watchtarget", "memberWindow", 52, ChangeTarget, settings)
   end
   w.party = party
+  maxupdatestep = #party * 10
   SaveSettings()
 end
 
