@@ -1,8 +1,8 @@
 local api = require("api")
 local file = "thiccbars\\data\\_global.lua"
 local CreateSlider =  require('thiccbars/util/slider') 
-checkButton = require('thiccbars/util/check_button')
-globals = require("thiccbars//common")
+local checkButton = require('thiccbars/util/check_button')
+local globals = require("thiccbars//common")
 
 local ENABLEWATCH = false
 
@@ -13,19 +13,15 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.2.1"
+  version = "1.6.2.2"
 }
 local widthoff = 0
 local width = 64 
-MARKERSCALER = 50
+local MARKERSCALER = 50
 
 local HP_STYLE = {
   coords = {301, 120, 150, 20 }
 }
-
-function math.clamp(num, min, max)
-    return math.max(min, math.min(num, max))
-end
 
 local markerCoords = {
     {
@@ -162,6 +158,7 @@ function SetDefaultBarColors()
   settings.barcolors.pdisabled = {205, 205, 205, 255}
   settings.barcolors.pet = {149, 127, 0, 255}
 end
+
 function SetDefaultTextColors()
   settings.textcolors.attacker = { 255, 255, 255, 255 }
   settings.textcolors.defender = { 255, 255, 255, 255 }
@@ -180,6 +177,7 @@ function SetDefaultTextColors()
   settings.textcolors.pdisabled = {0, 0, 0, 255}
   settings.textcolors.pet = {255, 255, 255, 255}
 end
+
 function SetDefaultTextSelectedColors()
   settings.selectedtextcolors.attacker = { 252, 219, 39, 255 }
   settings.selectedtextcolors.defender = { 252, 219, 39, 255 }
@@ -315,19 +313,22 @@ if  api._Thicc == nil then
 end
 local updatestep = 0
 local maxupdatestep = 0
+
 function DoUpdate()
   if w == nil then
     return
   end
+
   updatestep = updatestep + 1
 
   if updatestep > maxupdatestep then
     updatestep = 0
   end
+
   local updateitem = -1
+  
   if math.fmod(updatestep, 10) == 0 then
     updateitem = updatestep / 10
-    
   end
 
   screenw = api.Interface:GetScreenWidth() * ( 1 / api.Interface:GetUIScale())
@@ -1648,6 +1649,7 @@ local function CreateViewOfSettingsFrame()
     settings.namesize = value
     settingschanged = true
   end
+
   function w.GuildFontSizeScroll:OnSliderChanged(arg)
     local value = w.GuildFontSizeScroll:GetValue() or 0
     local str = string.format("%d", value)
@@ -1704,6 +1706,7 @@ local function ShowSettings()
   SettingsFrame.preview:SetSimpleMode(settings)
   SettingsFrame:Show(true)
 end
+
 local function OnEvent(window, evt, arg1)
 
 end
@@ -1713,18 +1716,17 @@ local SetMarkerTexture = function(markerTexture, markerIndex)
 end
 
 local function Load() 
-
   membermethods = require("thiccbars//member")
   CreateRaidMember = membermethods.CreateRaidMember
   SetViewOfRaidMember = membermethods.SetViewOfRaidMember
   settings = LoadSettings()
 
   uiScale = api.Interface:GetUIScale()
-  api.Log:Info(tostring(uiScale))
   api._Thicc.uiScale = uiScale
 
   CheckSettings()
   local multiple = settings.overheadiconsize / MARKERSCALER
+
   for i = 1, 12 do
     table.insert(markers, "0x00")
     local wIcon = api.Interface:CreateEmptyWindow("overheadMarker" .. i, "UIParent")
@@ -1743,6 +1745,7 @@ local function Load()
     end
     table.insert(markersIcon, wIcon)
   end
+
   SettingsFrame = CreateViewOfSettingsFrame()
   SettingsFrame:Show(false)
   SettingsFrame.preview:SetSimpleMode(settings)
@@ -1786,12 +1789,15 @@ local function Load()
     
   --playerpet1
   party[51] = CreateRaidMember(nil, "playerpet1", "memberWindow", 51, ChangeTarget, settings)
+
   if ENABLEWATCH then
     party[52] = CreateRaidMember(nil, "watchtarget", "memberWindow", 52, ChangeTarget, settings)
   end
+
   w.party = party
   maxupdatestep = #party * 10
   SaveSettings()
+  api.On("UPDATE", OnUpdate)
 end
 
 local function Unload()
@@ -1804,8 +1810,6 @@ local function Unload()
       --eventwatched:SetHandler("OnDragStart", eventwatched.OnDragStart)
   end
   if w ~= nil then
-    --w:ReleaseHandler("OnEvent")
-
     for i = 1, #w.party do
       w.party[i]:OnClose()
       w.party[i]:Show(false)
@@ -1828,8 +1832,6 @@ local function Unload()
     raidmanager.thiccButton = nil
   end
 end
-
-api.On("UPDATE", OnUpdate)
 
 thicc_addon.OnLoad = Load
 thicc_addon.OnUnload = Unload

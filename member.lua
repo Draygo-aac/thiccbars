@@ -1,15 +1,6 @@
 local MAX_RAID_PARTY_MEMBERS = 5
 local UNIT_VISIBLE_MAX_DISTANCE = 130
-local LIGHT_PURPLE = {
-  0.737,
-  0.075,
-  1
-  }
-local LIGHT_PURPLE_TARGET = {
-  0.541,
-  0,
-  0.769
-  }
+
 local markerCoords = {
     {
     384,
@@ -84,8 +75,9 @@ local markerCoords = {
     24
     }
 }
-SetViewOfRaidMember = require("thiccbars//member_view")
-function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
+local SetViewOfRaidMember = require("thiccbars//member_view")
+
+local function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   local w = SetViewOfRaidMember(name, ownId, index, parent)
   w:Show(false)
   
@@ -98,12 +90,14 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   w.notplayer = name ~= "player"
 
   w:SetSimpleMode(settings)
+
   function w:SetName(name)
     if name ~= nil and w.state.name ~= name then
       w.nameLabel:SetText(name)
       w.state.name = name
     end
   end
+
   function w:SetGuild(name)
     if name ~= nil then
       if w.state.gname ~= name then
@@ -114,30 +108,35 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         w.guildLabel:Show(false)
     end
   end
+
   function w:SetMaxHp(maxHp)
     if maxHp ~= nil then
       w.hpBar.statusBar:SetMinMaxValues(0, maxHp or 0)
       w.state.mhp = maxHp or 0
     end
   end
+
   function w:SetHp(hp)
     if hp ~= nil then
       w.hpBar.statusBar:SetValue(hp or 0)
       w.state.hp = hp or 0
     end
   end
+
   function w:SetMaxMp(maxMp)
     if maxMp ~= nil then
       w.mpBar.statusBar:SetMinMaxValues(0, maxMp or 0)
       w.state.mmp = maxMp or 0
     end
   end
+
   function w:SetMp(mp)
     if mp ~= nil then
       w.mpBar.statusBar:SetValue(mp or 0)
       w.state.mp = mp or 0
     end
   end
+
   function w:UpdateName()
     local unitid = api.Unit:GetUnitId(w.target)
     local myId = api.Unit:GetUnitId("target")
@@ -155,6 +154,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self.selectedIcon:Show(false)
     end
     self:SetName(name)
+    if info == nil then
+      return
+    end
     if info.expeditionName ~= nil then
         self:SetGuild(info.expeditionName)
     else
@@ -169,6 +171,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self:SetMaxHp(maxHp)
   end
+
   function w:UpdateHp()
     local hp = api.Unit:UnitHealth(w.target)
     if self.state.hp == hp then
@@ -177,6 +180,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self:SetHp(hp)
     self.state.dead = hp == 0
   end
+
   function w:UpdateMaxMp()
     local maxMp = api.Unit:UnitMaxMana(w.target)
     if self.state.mmp == maxMp then
@@ -184,6 +188,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self:SetMaxMp(maxMp)
   end
+
   function w:UpdateMp()
     local mp = api.Unit:UnitMana(w.target)
     if self.state.mp == mp then
@@ -191,9 +196,11 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     end
     self:SetMp(mp)
   end
+
   function w:GetRGB(carray)
     return ConvertColor(carray[1]), ConvertColor(carray[2]), ConvertColor(carray[3]), ConvertColor(carray[4])
   end
+
   function w:SetColor(key)
     if self.state.currentkey == key and self.state.selectedstate == self.selected then
       return
@@ -202,7 +209,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     local color = self.settings.barcolors[key]
     local textcolor = self.settings.textcolors[key]
     local selectedcolor = self.settings.selectedtextcolors[key]
-
 
     self.hpBar.statusBar:SetBarColor(self:GetRGB(color))
     if self.selected then
@@ -215,7 +221,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.state.currentkey = key
     self.state.selected = self.selected
   end
-
 
   function w:UpdateBuff(dead)
     w.buffWindow:BuffUpdate(w.target, dead)
@@ -303,7 +308,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
           return
         end
       end
-
       self:SetColor("pundecided")
       return
     end
@@ -326,11 +330,9 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
     self.nameLabel:SetWidth(nameWidth)
     self.guildLabel:SetWidth(width)
   end
+
   function w:UpdateLeaderMark()
     local authority = api.Unit:UnitTeamAuthority(self.target)
-    --local myId = api.Unit:GetUnitId("target")
-    --local targetName = api.Unit:GetUnitNameById(unitid)
-
     self.leaderMark:Show(false)
 
     if authority == "leader" or authority == "subleader" then
@@ -346,7 +348,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       self.nameLabel:RemoveAllAnchors()
       self.nameLabel:AddAnchor("TOPLEFT", self.hpBar, 3, 0)
     end
-
   end
 
   function w:UpdatePvPFlag()
@@ -385,6 +386,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   local SetMarkerTexture = function(markerTexture, markerIndex)
     markerTexture:SetCoords(markerCoords[markerIndex][1], markerCoords[markerIndex][2], markerCoords[markerIndex][3], markerCoords[markerIndex][4])
   end
+
   function w:SetMarker(memberId, markers)
     self.marker:SetVisible(false)
     if memberId == nil then
@@ -444,12 +446,13 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
         show = false
       end
     end
+
     if self.bypassTeamCheck or api.Unit:UnitIsTeamMember(self.target) == true then
-
       if w.notplayer then
-     
-        local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
-
+        --local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenPosition(self.target)
+        --local tx, ty, tz = api.Unit:GetUnitScreenNameTagOffset(self.target)
+        --api.Log:Info(tostring(tx) .. " " .. tostring(ty) .. " " .. tostring(tz))
+        local offsetX, offsetY, offsetZ = api.Unit:GetUnitScreenNameTagOffset(self.target)
         if offsetX == nil then
           self:Show(false)
           show = false
@@ -533,6 +536,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   end
 
   local event = w.eventWindow
+
   function event:OnClick(arg, arg1, arg2)
     if arg == "MiddleButton" then
         return
@@ -544,7 +548,6 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
       ChangeTarget(w.target)
     end
   end
-
 
   event:SetHandler("OnClick", event.OnClick)
 
@@ -560,6 +563,7 @@ function CreateRaidMember(parent, name , ownId, index, ChangeTarget, settings)
   end
   return w
 end
+
 local retval = {}
 retval.CreateRaidMember = CreateRaidMember
 retval.SetViewOfRaidMember = SetViewOfRaidMember

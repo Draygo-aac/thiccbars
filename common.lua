@@ -1,4 +1,4 @@
-globals = {}
+local globals = {}
 globals.RAID_FRAME_PARTY_LABEL_WIDTH = 34
 globals.RAID_FRAME_PARTY_LABEL_HEIGHT = 19
 globals.PARTY_FRAME_AMONG_INSET = 3
