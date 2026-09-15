@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.2.2"
+  version = "1.6.2.3"
 }
 local widthoff = 0
 local width = 64 
@@ -1797,6 +1797,7 @@ local function Load()
   w.party = party
   maxupdatestep = #party * 10
   SaveSettings()
+  --w:SetHandler("OnUpdate", OnUpdate)
   api.On("UPDATE", OnUpdate)
 end
 
@@ -1816,6 +1817,7 @@ local function Unload()
     end
     w.party = nil
     w:Show(false)
+    --w:ReleaseHandler("OnUpdate")
     w = nil
   end
   if wi ~= nil then

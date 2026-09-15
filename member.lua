@@ -174,11 +174,12 @@ local function CreateRaidMember(parent, name , ownId, index, ChangeTarget, setti
 
   function w:UpdateHp()
     local hp = api.Unit:UnitHealth(w.target)
+
     if self.state.hp == hp then
       return
     end
-    self:SetHp(hp)
     self.state.dead = hp == 0
+    self:SetHp(hp)
   end
 
   function w:UpdateMaxMp()
@@ -363,9 +364,11 @@ local function CreateRaidMember(parent, name , ownId, index, ChangeTarget, setti
     end
     local distance = api.Unit:UnitDistance(self.target)
     if distance == nil then
-      self:Show(false)
+      self.distanceLabel:Show(false)
+      --self:Show(false)
       return
     end
+    self.distanceLabel:Show(true)
     distance = math.abs(math.ceil(distance))
     --api.Log:Info(distance)
     local str = string.format("%dm", distance)
@@ -501,7 +504,7 @@ local function CreateRaidMember(parent, name , ownId, index, ChangeTarget, setti
       self:UpdateHp()
       self:UpdateMaxMp()
       self:UpdateMp()
-      self:UpdateBuff(self.dead)
+      self:UpdateBuff(self.state.dead)
       self:UpdateLeaderMark()
       self:UpdateDistance()
       self:UpdateBackground()
