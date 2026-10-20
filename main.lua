@@ -13,7 +13,7 @@ local thicc_addon = {
   name = "Thicc Bars",
   author = "Delarme",
   desc = "Nameplate overhaul addon.",
-  version = "1.6.2.5"
+  version = "1.6.2.6"
 }
 local widthoff = 0
 local width = 64 
@@ -376,8 +376,8 @@ function DoUpdate()
           centeredy = centeredy / factor
           posY = centeredy + (screenh / 2)
         end
-        marker.posX = api._Library.UI.Extensions.Math.clamp(posX + halfwidth, halfwidth, screenw - halfwidth)
-        marker.posY = api._Library.UI.Extensions.Math.clamp(posY, settings.iconoffset, screenh - settings.iconoffset)
+        marker.posX = api._Library.Extensions.Math.clamp(posX + halfwidth, halfwidth, screenw - halfwidth)
+        marker.posY = api._Library.Extensions.Math.clamp(posY, settings.iconoffset, screenh - settings.iconoffset)
       
         marker:Position()     
       else
